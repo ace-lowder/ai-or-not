@@ -1,4 +1,6 @@
 import { createContext, useContext } from 'react';
+import profileTest from '../assets/profile-test.png';
+import profileAI from '../assets/profile-ai.png';
 
 // prettier-ignore
 export interface Comment {
@@ -23,7 +25,7 @@ const CommentProvider: React.FC<{ children: React.ReactNode }> = ({
   const getRandomComment = () => {
     if (Math.random() > 0.5) {
       return {
-        profilePicture: 'profile-test.jpg',
+        profilePicture: profileTest,
         username: 'Test User',
         comment: 'This is a real test comment.',
         likes: 10,
@@ -33,7 +35,7 @@ const CommentProvider: React.FC<{ children: React.ReactNode }> = ({
       };
     } else {
       return {
-        profilePicture: 'profile-ai.jpg',
+        profilePicture: profileAI,
         username: 'AI ChatBot',
         comment: 'This is an AI test comment.',
         likes: 10,
