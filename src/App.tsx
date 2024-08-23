@@ -1,3 +1,4 @@
+import ChoiceButtons from './components/ChoiceButtons';
 import CommentDisplay from './components/CommentDisplay';
 import ScoreDisplay from './components/ScoreDisplay';
 import { CommentProvider } from './contexts/CommentProvider';
@@ -7,9 +8,10 @@ function App() {
   return (
     <ScoreProvider>
       <CommentProvider>
-        <div className="w-screen h-screen bg-gray-900 flex items-center justify-center">
+        <div className="w-screen h-screen bg-gray-900 flex flex-col justify-between">
           <ScoreDisplay />
           <CommentDisplay />
+          <ChoiceButtons />
         </div>
       </CommentProvider>
     </ScoreProvider>
