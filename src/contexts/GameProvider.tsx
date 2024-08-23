@@ -1,8 +1,9 @@
-import { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext } from 'react';
+import { useScore } from './ScoreProvider';
+import { useComment } from './CommentProvider';
 
 interface GameContextType {
-  isFetching: boolean;
-  setIsFetching: (isFetching: boolean) => void;
+  makeGuess: (guess: boolean) => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -10,10 +11,23 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [isFetching, setIsFetching] = useState(false);
+  const { incrementScore, resetScore } = useScore();
+  const { fetchedComment, getRandomComment } = useComment();
+
+  const makeGuess = (guess: boolean) => {
+    if (fetchedComment) {
+      if (fetchedComment.isReal === guess) {
+        incrementScore();
+      } else {
+        resetScore();
+      }
+    }
+
+    getRandomComment();
+  };
 
   return (
-    <GameContext.Provider value={{ isFetching, setIsFetching }}>
+    <GameContext.Provider value={{ makeGuess }}>
       {children}
     </GameContext.Provider>
   );

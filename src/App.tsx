@@ -2,17 +2,20 @@ import ChoiceButtons from './components/ChoiceButtons';
 import CommentDisplay from './components/CommentDisplay';
 import ScoreDisplay from './components/ScoreDisplay';
 import { CommentProvider } from './contexts/CommentProvider';
+import { GameProvider } from './contexts/GameProvider';
 import { ScoreProvider } from './contexts/ScoreProvider';
 
 function App() {
   return (
     <ScoreProvider>
       <CommentProvider>
-        <div className="w-screen h-screen bg-gray-900 flex flex-col justify-between">
-          <ScoreDisplay />
-          <CommentDisplay />
-          <ChoiceButtons />
-        </div>
+        <GameProvider>
+          <div className="w-screen h-screen bg-gray-900 flex flex-col justify-between">
+            <ScoreDisplay />
+            <CommentDisplay />
+            <ChoiceButtons />
+          </div>
+        </GameProvider>
       </CommentProvider>
     </ScoreProvider>
   );

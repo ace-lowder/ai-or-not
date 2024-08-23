@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import profileTest from '../assets/profile-test.png';
 import profileAI from '../assets/profile-ai.png';
 
@@ -14,7 +14,8 @@ export interface Comment {
 }
 
 interface CommentContextType {
-  getRandomComment: () => Comment;
+  fetchedComment: Comment | undefined;
+  getRandomComment: () => void;
 }
 
 const CommentContext = createContext<CommentContextType | undefined>(undefined);
@@ -22,32 +23,37 @@ const CommentContext = createContext<CommentContextType | undefined>(undefined);
 const CommentProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const [fetchedComment, setFetchedComment] = useState<Comment | undefined>(
+    undefined,
+  );
+
   const getRandomComment = () => {
-    if (Math.random() > 0.5) {
-      return {
-        profilePicture: profileTest,
-        username: 'Test User',
-        comment: 'This is a real test comment.',
-        likes: 10,
-        date: '2024-08-23',
-        video: 'Test Video',
-        isReal: true,
-      };
-    } else {
-      return {
-        profilePicture: profileAI,
-        username: 'AI ChatBot',
-        comment: 'This is an AI test comment.',
-        likes: 10,
-        date: '2024-08-23',
-        video: undefined,
-        isReal: false,
-      };
-    }
+    const randomComment =
+      Math.random() > 0.5
+        ? {
+            profilePicture: profileTest,
+            username: 'Test User',
+            comment: 'This is a real test comment.',
+            likes: 10,
+            date: '2024-08-23',
+            video: 'Test Video',
+            isReal: true,
+          }
+        : {
+            profilePicture: profileAI,
+            username: 'AI ChatBot',
+            comment: 'This is an AI test comment.',
+            likes: 10,
+            date: '2024-08-23',
+            video: undefined,
+            isReal: false,
+          };
+
+    setFetchedComment(randomComment);
   };
 
   return (
-    <CommentContext.Provider value={{ getRandomComment }}>
+    <CommentContext.Provider value={{ fetchedComment, getRandomComment }}>
       {children}
     </CommentContext.Provider>
   );
