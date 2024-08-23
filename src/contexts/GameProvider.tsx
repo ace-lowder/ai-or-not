@@ -1,6 +1,6 @@
 import React, { createContext, useContext } from 'react';
-import { useScore } from './ScoreProvider';
 import { useComment } from './CommentProvider';
+import { Events } from './Events';
 
 interface GameContextType {
   makeGuess: (guess: boolean) => void;
@@ -11,15 +11,14 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { incrementScore, resetScore } = useScore();
   const { fetchedComment, getRandomComment } = useComment();
 
   const makeGuess = (guess: boolean) => {
     if (fetchedComment) {
       if (fetchedComment.isReal === guess) {
-        incrementScore();
+        Events.emit('correct');
       } else {
-        resetScore();
+        Events.emit('incorrect');
       }
     }
 

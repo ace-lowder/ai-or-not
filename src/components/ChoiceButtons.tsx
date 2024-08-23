@@ -4,7 +4,7 @@ const ChoiceButtons: React.FC = () => {
   const { makeGuess } = useGame();
 
   return (
-    <div className="bg-gray-800 h-32 text-white flex p-4 gap-4">
+    <div className="bg-gray-800 h-32 text-white flex p-4 gap-4 z-20">
       <button
         className="flex-grow bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
         onClick={() => makeGuess(false)}

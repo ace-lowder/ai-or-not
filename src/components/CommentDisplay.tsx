@@ -9,7 +9,7 @@ const CommentDisplay: React.FC = () => {
   }, []);
 
   return (
-    <div className="max-w-md mx-auto bg-white rounded shadow-lg p-4 text-gray-900">
+    <div className="max-w-md mx-auto bg-white rounded shadow-lg p-4 text-gray-900 z-20">
       <div className="flex items-center mb-2">
         <img
           src={fetchedComment?.profilePicture}
