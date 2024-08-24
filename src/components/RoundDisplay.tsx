@@ -1,24 +1,19 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useComment } from '../contexts/CommentProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 import CommentCard from './CommentCard';
+import Dialogue from './Dialogue';
 import { Events } from '../contexts/Events';
-
-interface Comment {
-  profilePicture: string;
-  username: string;
-  comment: string;
-  likes: number;
-  date: string;
-}
 
 const RoundDisplay: React.FC = () => {
   const { fetchedComment } = useComment();
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [elements, setElements] = useState<JSX.Element[]>([
+    <Dialogue>Press a button to start the round</Dialogue>,
+  ]);
 
   useEffect(() => {
     const resetRound = () => {
-      setComments([]);
+      setElements([<Dialogue>Press a button to start the round</Dialogue>]);
     };
 
     Events.subscribe('incorrect', resetRound);
@@ -30,14 +25,17 @@ const RoundDisplay: React.FC = () => {
 
   useEffect(() => {
     if (fetchedComment) {
-      setComments(prevComments => [...prevComments, fetchedComment]);
+      setElements(prevElements => [
+        ...prevElements,
+        <CommentCard comment={fetchedComment} />,
+      ]);
     }
   }, [fetchedComment]);
 
   return (
     <motion.div className="fixed bottom-[45%] overflow-visible flex flex-col gap-8 z-10">
       <AnimatePresence initial={false}>
-        {comments.map((comment, index) => (
+        {elements.map((element, index) => (
           <motion.div
             key={index}
             layout
@@ -45,7 +43,7 @@ const RoundDisplay: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
           >
-            <CommentCard comment={comment} />
+            {element}
           </motion.div>
         ))}
       </AnimatePresence>
