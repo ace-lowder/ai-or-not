@@ -22,3 +22,31 @@
     opacity: 0;
   }
 }
+
+.animated-background {
+  background: repeating-linear-gradient(
+    55deg,
+    #ffffff05,
+    #ffffff05 20px,
+    #111827 20px,
+    #111827 40px
+  );
+  background-size: 150% 100%;
+  animation: scroll-background 40s linear infinite;
+}
+
+@media (max-width: 768px) {
+  .animated-background {
+    background-size: 200% 100%;
+    animation: scroll-background 30s linear infinite;
+  }
+}
+
+@keyframes scroll-background {
+  0% {
+    background-position: 100% 0%;
+  }
+  100% {
+    background-position: 0% 0%;
+  }
+}

@@ -12,7 +12,7 @@ function App() {
       <CommentProvider>
         <GameProvider>
           <OverlayEffects />
-          <div className="w-screen h-screen bg-gray-900 flex flex-col justify-between overflow-hidden">
+          <div className="w-screen h-screen flex flex-col justify-between overflow-hidden bg-gray-900">
             <ScoreDisplay />
             <CommentDisplay />
             <ChoiceButtons />
