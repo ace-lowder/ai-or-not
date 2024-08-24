@@ -1,7 +1,33 @@
+import { useEffect } from 'react';
 import { useGame } from '../contexts/GameProvider';
 
 const ChoiceButtons: React.FC = () => {
   const { makeGuess } = useGame();
+
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      switch (event.key) {
+        case '1':
+        case 'a':
+        case 'ArrowLeft':
+          makeGuess(false);
+          break;
+        case '2':
+        case 'd':
+        case 'ArrowRight':
+          makeGuess(true);
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [makeGuess]);
 
   return (
     <div className="h-1/5 text-white flex p-4 gap-4 z-20">

@@ -56,11 +56,12 @@ const OverlayEffects: React.FC = () => {
   return (
     <>
       <div
-        className={`fixed inset-0 z-10 pointer-events-none ${glowClass} ${
+        className={`fixed inset-0 z-10 pointer-events-none overflow-hidden ${glowClass} ${
           glow !== 'none' ? '' : 'transition-all duration-1000 ease-in'
         }`}
-      />
-      {particles}
+      >
+        {particles}
+      </div>
     </>
   );
 };
