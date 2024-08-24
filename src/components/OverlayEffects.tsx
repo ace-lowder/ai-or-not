@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Events } from '../contexts/Events';
+import correctSound from '../assets/correct.mp3';
+import incorrectSound from '../assets/incorrect.mp3';
 
 const OverlayEffects: React.FC = () => {
   const [glow, setGlow] = useState<'none' | 'green' | 'red'>('none');
@@ -11,12 +13,27 @@ const OverlayEffects: React.FC = () => {
       return () => clearTimeout(timeout);
     };
 
-    Events.subscribe('correct', () => glow('green'));
-    Events.subscribe('incorrect', () => glow('red'));
+    const playSound = (soundFile: string) => {
+      const audio = new Audio(soundFile);
+      audio.play();
+    };
+
+    const handleCorrect = () => {
+      glow('green');
+      playSound(correctSound);
+    };
+
+    const handleIncorrect = () => {
+      glow('red');
+      playSound(incorrectSound);
+    };
+
+    Events.subscribe('correct', handleCorrect);
+    Events.subscribe('incorrect', handleIncorrect);
 
     return () => {
-      Events.unsubscribe('correct', () => glow('green'));
-      Events.unsubscribe('incorrect', () => glow('red'));
+      Events.unsubscribe('correct', handleCorrect);
+      Events.unsubscribe('incorrect', handleIncorrect);
     };
   }, []);
 
@@ -29,7 +46,7 @@ const OverlayEffects: React.FC = () => {
 
   return (
     <div
-      className={`fixed inset-0 z-10 pointer-events-none  ${glowClass} ${
+      className={`fixed inset-0 z-10 pointer-events-none ${glowClass} ${
         glow !== 'none' ? '' : 'transition-all duration-1000 ease-in'
       }`}
     />
