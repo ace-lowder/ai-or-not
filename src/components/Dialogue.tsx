@@ -18,14 +18,19 @@ const Dialogue: React.FC<DialogueProps> = ({ children }) => {
       } else {
         clearInterval(interval);
       }
-    }, 150);
+    }, visibleWords[visibleWords.length - 1].length * 20 + 100);
 
     return () => clearInterval(interval);
   }, [words]);
 
   return (
-    <div className="w-full mx-auto bg-white outline outline-[6px] outline-gray-700 text-gray-700 font-bold text-center rounded-xl p-4 m-4 shadow-lg">
-      {visibleWords.join(' ')}
+    <div className="w-full">
+      <div className="float relative">
+        <span className="text-6xl sway absolute">🤖</span>
+      </div>
+      <div className="ml-[5.5rem] flex-grow bg-white outline outline-[6px] outline-gray-700 text-gray-700 font-bold text-center rounded-xl p-4 shadow-lg">
+        {visibleWords.join(' ')}
+      </div>
     </div>
   );
 };
