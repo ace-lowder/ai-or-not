@@ -1,10 +1,39 @@
+import { useEffect, useState } from 'react';
 import { useScore } from '../contexts/ScoreProvider';
+import { Events } from '../contexts/Events';
 
 const ScoreDisplay: React.FC = () => {
   const { score } = useScore();
+  const [fadeColor, setFadeColor] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const handleCorrect = () => {
+      setFadeColor('text-green-500');
+      setTimeout(() => setFadeColor(undefined), 50);
+    };
+
+    const handleIncorrect = () => {
+      setFadeColor('text-red-500');
+      setTimeout(() => setFadeColor(undefined), 50);
+    };
+
+    Events.subscribe('correct', handleCorrect);
+    Events.subscribe('incorrect', handleIncorrect);
+
+    return () => {
+      Events.unsubscribe('correct', handleCorrect);
+      Events.unsubscribe('incorrect', handleIncorrect);
+    };
+  }, []);
 
   return (
-    <div className="bg-gray-800 text-white text-2xl font-bold rounded-xl w-14 h-14 m-4 relative z-20 flex items-center justify-center">
+    <div
+      className={`relative bg-gray-800 font-bold rounded-xl w-14 h-14 top-4 left-4 z-20 flex items-center justify-center ${
+        fadeColor
+          ? `${fadeColor} text-3xl`
+          : 'text-white transition-all duration-300 text-2xl'
+      }`}
+    >
       {score}
     </div>
   );
