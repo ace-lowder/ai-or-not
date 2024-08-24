@@ -11,7 +11,6 @@ const ChoiceButtons: React.FC = () => {
 
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
-      console.log(disabled);
       if (disabled) return;
       switch (event.key) {
         case '1':
@@ -62,7 +61,7 @@ const ChoiceButtons: React.FC = () => {
     'flex-grow flex flex-col items-center gap-1 text-sm text-white font-bold pt-6 px-4 rounded-2xl rounded-b-3xl border border-gray-700 border-4';
 
   return (
-    <div className="text-white flex p-4 gap-4 z-20">
+    <div className="fixed bottom-0 w-full text-white flex p-4 gap-4 z-20">
       <button
         className={`${buttonClasses} ${
           aiPressed

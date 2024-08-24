@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import profileTest from '../assets/profile-test.png';
 import profileAI from '../assets/profile-ai.png';
 

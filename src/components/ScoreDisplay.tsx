@@ -28,7 +28,7 @@ const ScoreDisplay: React.FC = () => {
 
   return (
     <div
-      className={`relative bg-gray-800 font-bold rounded-xl w-14 h-14 top-4 left-4 z-20 flex items-center justify-center outline outline-gray-700 outline-4 shadow-2xl ${
+      className={`fixed bg-gray-800 font-bold rounded-xl w-14 h-14 top-4 left-4 z-20 flex items-center justify-center outline outline-gray-700 outline-4 shadow-2xl ${
         fadeColor
           ? `${fadeColor} text-3xl`
           : 'text-white transition-all duration-300 text-2xl'

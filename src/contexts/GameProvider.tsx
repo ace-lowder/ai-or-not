@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from 'react';
+import { createContext, useContext, useEffect } from 'react';
 import { useComment } from './CommentProvider';
 import { Events } from './Events';
 
@@ -21,7 +21,6 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
         Events.emit('incorrect');
       }
     }
-
     getRandomComment();
   };
 

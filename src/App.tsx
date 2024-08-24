@@ -1,5 +1,5 @@
 import ChoiceButtons from './components/ChoiceButtons';
-import CommentDisplay from './components/CommentDisplay';
+import RoundDisplay from './components/RoundDisplay';
 import OverlayEffects from './components/OverlayEffects';
 import ScoreDisplay from './components/ScoreDisplay';
 import { CommentProvider } from './contexts/CommentProvider';
@@ -12,9 +12,9 @@ function App() {
       <CommentProvider>
         <GameProvider>
           <OverlayEffects />
-          <div className="w-screen h-screen flex flex-col justify-between overflow-hidden bg-gray-900">
+          <div className="w-screen h-screen max-h-screen flex flex-col justify-center items-center overflow-hidden bg-gray-900">
             <ScoreDisplay />
-            <CommentDisplay />
+            <RoundDisplay />
             <ChoiceButtons />
           </div>
         </GameProvider>
