@@ -21,7 +21,7 @@ const OverlayEffects: React.FC = () => {
     const generateParticles = (color: string) => {
       const newParticles = Array.from(
         { length: Math.round(window.innerWidth / 20) },
-        _ => <Particle key={Math.random()} color={color} />,
+        () => <Particle key={Math.random()} color={color} />,
       );
       setParticles(prevParticles => [...prevParticles, ...newParticles]);
     };

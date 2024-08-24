@@ -11,6 +11,8 @@ const ChoiceButtons: React.FC = () => {
 
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
+      console.log(disabled);
+      if (disabled) return;
       switch (event.key) {
         case '1':
         case 'a':
@@ -32,7 +34,7 @@ const ChoiceButtons: React.FC = () => {
     return () => {
       window.removeEventListener('keydown', handleKeyPress);
     };
-  }, [makeGuess]);
+  }, [disabled]);
 
   const handleAIClick = () => {
     makeGuess(false);
@@ -42,7 +44,7 @@ const ChoiceButtons: React.FC = () => {
     setTimeout(() => {
       setDisabled(false);
       setAiPressed(false);
-    }, 50);
+    }, 200);
   };
 
   const handleRealClick = () => {
@@ -53,7 +55,7 @@ const ChoiceButtons: React.FC = () => {
     setTimeout(() => {
       setDisabled(false);
       setRealPressed(false);
-    }, 50);
+    }, 200);
   };
 
   const buttonClasses =
@@ -62,7 +64,7 @@ const ChoiceButtons: React.FC = () => {
   return (
     <div className="text-white flex p-4 gap-4 z-20">
       <button
-        className={`${buttonClasses} hover:bg-blue-700 ${
+        className={`${buttonClasses} ${
           aiPressed
             ? 'bg-blue-200 pb-4 border-b-[6px] mt-2'
             : 'bg-blue-500 pb-6 border-b-[12px] transition-all duration-300'
@@ -73,7 +75,7 @@ const ChoiceButtons: React.FC = () => {
         <FaRobot className="w-10 h-10 mt-2" /> AI
       </button>
       <button
-        className={`${buttonClasses} hover:bg-red-700 ${
+        className={`${buttonClasses} ${
           realPressed
             ? 'bg-red-200 pb-4 border-b-[6px] mt-2'
             : 'bg-red-500 pb-6 border-b-[12px] transition-all duration-300'
