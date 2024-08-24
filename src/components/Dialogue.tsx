@@ -28,8 +28,11 @@ const Dialogue: React.FC<DialogueProps> = ({ children }) => {
       <div className="float relative">
         <span className="text-6xl sway absolute">🤖</span>
       </div>
-      <div className="ml-[5.5rem] flex-grow bg-white outline outline-[6px] outline-gray-700 text-gray-700 font-bold text-center rounded-xl p-4 shadow-lg">
-        {visibleWords.join(' ')}
+      <div className="ml-[5.5rem] flex-grow bg-white outline outline-[6px] outline-gray-700 text-gray-700 font-bold text-center rounded-xl p-4 shadow-lg relative">
+        <span className="text-white">{children}</span>
+        <span className="absolute inset-0 p-4 box-content">
+          {visibleWords.join(' ')}
+        </span>
       </div>
     </div>
   );

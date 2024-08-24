@@ -33,7 +33,7 @@ const RoundDisplay: React.FC = () => {
   }, [fetchedComment]);
 
   return (
-    <motion.div className="fixed bottom-[45%] w-full px-12 overflow-visible flex flex-col gap-8 z-10">
+    <motion.div className="fixed bottom-[45%] w-full max-w-96 px-12 overflow-visible flex flex-col gap-8 z-10">
       <AnimatePresence initial={false}>
         {elements.map((element, index) => (
           <motion.div
