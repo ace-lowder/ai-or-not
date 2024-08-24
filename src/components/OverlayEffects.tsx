@@ -1,31 +1,40 @@
 import { useEffect, useState } from 'react';
 import { Events } from '../contexts/Events';
+import Particle from './Particle';
 import correctSound from '../assets/correct.mp3';
 import incorrectSound from '../assets/incorrect.mp3';
 
 const OverlayEffects: React.FC = () => {
   const [glow, setGlow] = useState<'none' | 'green' | 'red'>('none');
+  const [particles, setParticles] = useState<JSX.Element[]>([]);
 
   useEffect(() => {
     const glow = (color: 'green' | 'red') => {
       setGlow(color);
-      const timeout = setTimeout(() => setGlow('none'), 100);
-      return () => clearTimeout(timeout);
+      setTimeout(() => setGlow('none'), 100);
     };
 
     const playSound = (soundFile: string) => {
-      const audio = new Audio(soundFile);
-      audio.play();
+      new Audio(soundFile).play();
+    };
+
+    const generateParticles = (color: string) => {
+      const newParticles = Array.from({ length: 20 }, (_, index) => (
+        <Particle key={Date.now() + index} color={color} />
+      ));
+      setParticles(prevParticles => [...prevParticles, ...newParticles]);
     };
 
     const handleCorrect = () => {
       glow('green');
       playSound(correctSound);
+      generateParticles('green');
     };
 
     const handleIncorrect = () => {
       glow('red');
       playSound(incorrectSound);
+      generateParticles('red');
     };
 
     Events.subscribe('correct', handleCorrect);
@@ -45,11 +54,14 @@ const OverlayEffects: React.FC = () => {
       : '';
 
   return (
-    <div
-      className={`fixed inset-0 z-10 pointer-events-none ${glowClass} ${
-        glow !== 'none' ? '' : 'transition-all duration-1000 ease-in'
-      }`}
-    />
+    <>
+      <div
+        className={`fixed inset-0 z-10 pointer-events-none ${glowClass} ${
+          glow !== 'none' ? '' : 'transition-all duration-1000 ease-in'
+        }`}
+      />
+      {particles}
+    </>
   );
 };
 

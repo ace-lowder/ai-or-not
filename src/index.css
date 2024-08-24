@@ -1,3 +1,24 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.particle {
+  position: absolute;
+  bottom: 0;
+  border-radius: 50%;
+  opacity: 0;
+  animation-name: flyUp;
+  animation-fill-mode: forwards;
+  animation-timing-function: ease-out;
+}
+
+@keyframes flyUp {
+  0% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-30vh);
+    opacity: 0;
+  }
+}
