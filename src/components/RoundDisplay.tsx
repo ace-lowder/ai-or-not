@@ -13,7 +13,7 @@ const RoundDisplay: React.FC = () => {
 
   useEffect(() => {
     const resetRound = () => {
-      setElements([<Dialogue>Press a button to start the round</Dialogue>]);
+      setElements([<Dialogue>Start the round</Dialogue>]);
     };
 
     Events.subscribe('incorrect', resetRound);
