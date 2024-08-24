@@ -1,7 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useGame } from '../contexts/GameProvider';
+import { FaRobot } from 'react-icons/fa';
+import { IoPerson } from 'react-icons/io5';
 
 const ChoiceButtons: React.FC = () => {
+  const [disabled, setDisabled] = useState(false);
+  const [aiPressed, setAiPressed] = useState(false);
+  const [realPressed, setRealPressed] = useState(false);
   const { makeGuess } = useGame();
 
   useEffect(() => {
@@ -10,12 +15,12 @@ const ChoiceButtons: React.FC = () => {
         case '1':
         case 'a':
         case 'ArrowLeft':
-          makeGuess(false);
+          handleAIClick();
           break;
         case '2':
         case 'd':
         case 'ArrowRight':
-          makeGuess(true);
+          handleRealClick();
           break;
         default:
           break;
@@ -29,19 +34,54 @@ const ChoiceButtons: React.FC = () => {
     };
   }, [makeGuess]);
 
+  const handleAIClick = () => {
+    makeGuess(false);
+    setDisabled(true);
+    setAiPressed(true);
+
+    setTimeout(() => {
+      setDisabled(false);
+      setAiPressed(false);
+    }, 50);
+  };
+
+  const handleRealClick = () => {
+    makeGuess(true);
+    setDisabled(true);
+    setRealPressed(true);
+
+    setTimeout(() => {
+      setDisabled(false);
+      setRealPressed(false);
+    }, 50);
+  };
+
+  const buttonClasses =
+    'flex-grow flex flex-col items-center gap-1 text-sm text-white font-bold pt-6 px-4 rounded-2xl rounded-b-3xl border border-gray-700 border-4';
+
   return (
-    <div className="h-1/5 text-white flex p-4 gap-4 z-20">
+    <div className="text-white flex p-4 gap-4 z-20">
       <button
-        className="flex-grow bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        onClick={() => makeGuess(false)}
+        className={`${buttonClasses} hover:bg-blue-700 ${
+          aiPressed
+            ? 'bg-blue-200 pb-4 border-b-[6px] mt-2'
+            : 'bg-blue-500 pb-6 border-b-[12px] transition-all duration-300'
+        }`}
+        onClick={handleAIClick}
+        disabled={disabled}
       >
-        AI
+        <FaRobot className="w-10 h-10 mt-2" /> AI
       </button>
       <button
-        className="flex-grow bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-        onClick={() => makeGuess(true)}
+        className={`${buttonClasses} hover:bg-red-700 ${
+          realPressed
+            ? 'bg-red-200 pb-4 border-b-[6px] mt-2'
+            : 'bg-red-500 pb-6 border-b-[12px] transition-all duration-300'
+        }`}
+        onClick={handleRealClick}
+        disabled={disabled}
       >
-        Real
+        <IoPerson className="w-10 h-10 mt-2" /> Real
       </button>
     </div>
   );

@@ -14,11 +14,11 @@
 
 @keyframes flyUp {
   0% {
-    transform: translateY(0);
-    opacity: 0.5;
+    transform: translateY(10px);
+    opacity: 0.8;
   }
   100% {
-    transform: translateY(-30vh);
+    transform: translateY(-35vh);
     opacity: 0;
   }
 }

@@ -19,9 +19,10 @@ const OverlayEffects: React.FC = () => {
     };
 
     const generateParticles = (color: string) => {
-      const newParticles = Array.from({ length: 20 }, (_, index) => (
-        <Particle key={Date.now() + index} color={color} />
-      ));
+      const newParticles = Array.from(
+        { length: Math.round(window.innerWidth / 20) },
+        _ => <Particle key={Math.random()} color={color} />,
+      );
       setParticles(prevParticles => [...prevParticles, ...newParticles]);
     };
 
@@ -57,7 +58,7 @@ const OverlayEffects: React.FC = () => {
     <>
       <div
         className={`fixed inset-0 z-10 pointer-events-none overflow-hidden ${glowClass} ${
-          glow !== 'none' ? '' : 'transition-all duration-1000 ease-in'
+          glow !== 'none' ? '' : 'transition-all duration-[1500ms] ease-in'
         }`}
       >
         {particles}
