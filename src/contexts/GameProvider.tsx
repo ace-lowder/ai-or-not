@@ -1,13 +1,14 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useComment } from './CommentProvider';
 import { Events } from './Events';
-import Dialogue from '../components/display/Dialogue';
-import CommentCard from '../components/display/CommentCard';
+import Dialogue from '../components/Dialogue';
+import CommentCard from '../components/CommentCard';
 
 interface GameContextType {
   started: boolean;
   disabled: boolean;
   idle: boolean;
+  gameOver: boolean;
   round: JSX.Element[];
   makeGuess: (guess: boolean) => void;
 }
@@ -19,7 +20,7 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const { fetchedComment, fetchComment } = useComment();
 
-  const [started, setStarted] = useState(true);
+  const [started, setStarted] = useState(false);
   const [disabled, setDisabled] = useState(false);
   const [idle, setIdle] = useState(true);
   const [gameOver, setGameOver] = useState(false);
@@ -47,7 +48,7 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const addElement = () => {
-    if (Math.random() > 0.5) {
+    if (Math.random() > 0.1) {
       fetchComment();
     } else {
       addDialogue();
@@ -70,25 +71,24 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const tempDisable = () => {
-    console.log('Disabling for 200ms');
     setDisabled(true);
-    setTimeout(() => setDisabled(false), 200);
+    setTimeout(() => setDisabled(false), 300);
   };
 
   const makeGuess = (guess: boolean) => {
     if (gameOver) {
       setGameOver(false);
+      Events.emit('reset');
       setRound([]);
     }
 
     if (!started) {
       setStarted(true);
-      fetchComment();
-      return;
     }
 
     if (idle) {
       setIdle(false);
+      tempDisable();
       fetchComment();
       return;
     }
@@ -96,10 +96,10 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     checkGuess(guess);
   };
 
-  console.log(round);
-
   return (
-    <GameContext.Provider value={{ started, disabled, idle, round, makeGuess }}>
+    <GameContext.Provider
+      value={{ started, disabled, idle, gameOver, round, makeGuess }}
+    >
       {children}
     </GameContext.Provider>
   );

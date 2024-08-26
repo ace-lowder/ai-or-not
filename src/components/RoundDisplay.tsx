@@ -1,4 +1,4 @@
-import { useGame } from '../../contexts/GameProvider';
+import { useGame } from '../contexts/GameProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const RoundDisplay: React.FC = () => {

@@ -17,11 +17,11 @@ const ScoreProvider: React.FC<{ children: React.ReactNode }> = ({
     const resetScore = () => setScore(0);
 
     Events.subscribe('correct', incrementScore);
-    Events.subscribe('incorrect', resetScore);
+    Events.subscribe('reset', resetScore);
 
     return () => {
       Events.unsubscribe('correct', incrementScore);
-      Events.unsubscribe('incorrect', resetScore);
+      Events.unsubscribe('reset', resetScore);
     };
   }, []);
 

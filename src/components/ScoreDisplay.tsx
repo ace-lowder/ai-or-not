@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useScore } from '../../contexts/ScoreProvider';
-import { Events } from '../../contexts/Events';
+import { useScore } from '../contexts/ScoreProvider';
+import { Events } from '../contexts/Events';
 
 const ScoreDisplay: React.FC = () => {
   const { score } = useScore();
@@ -18,11 +18,11 @@ const ScoreDisplay: React.FC = () => {
     };
 
     Events.subscribe('correct', handleCorrect);
-    Events.subscribe('incorrect', handleIncorrect);
+    Events.subscribe('reset', handleIncorrect);
 
     return () => {
       Events.unsubscribe('correct', handleCorrect);
-      Events.unsubscribe('incorrect', handleIncorrect);
+      Events.unsubscribe('reset', handleIncorrect);
     };
   }, []);
 
