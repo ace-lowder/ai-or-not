@@ -56,6 +56,15 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [fetchedComment]);
 
   const addElement = () => {
+    const lastFiveElements = round.slice(-5);
+    const hasDialogue = lastFiveElements.some(
+      element => element.element.type === Dialogue,
+    );
+    if (!hasDialogue) {
+      addDialogue('This is a test');
+      return;
+    }
+
     if (Math.random() > 0.2) {
       fetchComment();
     } else {
