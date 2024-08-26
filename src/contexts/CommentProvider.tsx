@@ -15,7 +15,7 @@ export interface Comment {
 
 interface CommentContextType {
   fetchedComment: Comment | undefined;
-  getRandomComment: () => void;
+  fetchComment: () => void;
 }
 
 const CommentContext = createContext<CommentContextType | undefined>(undefined);
@@ -27,7 +27,7 @@ const CommentProvider: React.FC<{ children: React.ReactNode }> = ({
     undefined,
   );
 
-  const getRandomComment = () => {
+  const fetchComment = () => {
     const randomComment =
       Math.random() > 0.5
         ? {
@@ -53,7 +53,7 @@ const CommentProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   return (
-    <CommentContext.Provider value={{ fetchedComment, getRandomComment }}>
+    <CommentContext.Provider value={{ fetchedComment, fetchComment }}>
       {children}
     </CommentContext.Provider>
   );

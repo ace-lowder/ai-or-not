@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useScore } from '../contexts/ScoreProvider';
-import { Events } from '../contexts/Events';
+import { useScore } from '../../contexts/ScoreProvider';
+import { Events } from '../../contexts/Events';
 
 const ScoreDisplay: React.FC = () => {
   const { score } = useScore();

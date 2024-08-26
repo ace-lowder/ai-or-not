@@ -1,7 +1,7 @@
-import ChoiceButtons from './components/ChoiceButtons';
-import RoundDisplay from './components/RoundDisplay';
-import OverlayEffects from './components/OverlayEffects';
-import ScoreDisplay from './components/ScoreDisplay';
+import ChoiceButtons from './components/buttons/ChoiceButtons';
+import RoundDisplay from './components/display/RoundDisplay';
+import OverlayEffects from './components/effects/OverlayEffects';
+import ScoreDisplay from './components/menu/ScoreDisplay';
 import { CommentProvider } from './contexts/CommentProvider';
 import { GameProvider } from './contexts/GameProvider';
 import { ScoreProvider } from './contexts/ScoreProvider';

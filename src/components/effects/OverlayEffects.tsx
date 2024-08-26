@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Events } from '../contexts/Events';
+import { Events } from '../../contexts/Events';
 import Particle from './Particle';
-import correctSound from '../assets/correct.wav';
-import incorrectSound from '../assets/incorrect.wav';
+import correctSound from '../../assets/correct.wav';
+import incorrectSound from '../../assets/incorrect.wav';
 
 const OverlayEffects: React.FC = () => {
   const [glow, setGlow] = useState<'none' | 'green' | 'red'>('none');

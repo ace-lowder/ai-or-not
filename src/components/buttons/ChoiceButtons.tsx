@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useGame } from '../contexts/GameProvider';
+import { useGame } from '../../contexts/GameProvider';
 import { FaRobot } from 'react-icons/fa';
 import { IoPerson } from 'react-icons/io5';
 
