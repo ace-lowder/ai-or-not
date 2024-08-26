@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { useComment } from './CommentProvider';
 import { Events } from './Events';
 import Dialogue from '../components/Dialogue';
@@ -9,7 +9,7 @@ interface GameContextType {
   disabled: boolean;
   idle: boolean;
   gameOver: boolean;
-  round: JSX.Element[];
+  round: { id: number; element: JSX.Element }[];
   makeGuess: (guess: boolean) => void;
 }
 
@@ -24,34 +24,42 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   const [disabled, setDisabled] = useState(false);
   const [idle, setIdle] = useState(true);
   const [gameOver, setGameOver] = useState(false);
-  const [round, setRound] = useState<JSX.Element[]>([]);
+  const [round, setRound] = useState<{ id: number; element: JSX.Element }[]>(
+    [],
+  );
+  const [idCounter, setIdCounter] = useState(0);
 
+  const didMount = useRef(false);
   useEffect(() => {
-    setRound([<Dialogue>Press a button to start the round</Dialogue>]);
+    if (didMount.current) return;
+    didMount.current = true;
+    addDialogue('Press a button to start the round');
   }, []);
+
+  const addDialogue = (text: string) => {
+    setRound(prevElements => [
+      ...prevElements,
+      { id: idCounter, element: <Dialogue>{text}</Dialogue> },
+    ]);
+    setIdCounter(prevId => prevId + 1);
+    setIdle(true);
+  };
 
   useEffect(() => {
     if (fetchedComment) {
       setRound(prevElements => [
         ...prevElements,
-        <CommentCard comment={fetchedComment} />,
+        { id: idCounter, element: <CommentCard comment={fetchedComment} /> },
       ]);
+      setIdCounter(prevId => prevId + 1);
     }
   }, [fetchedComment]);
 
-  const addDialogue = () => {
-    setRound(prevElements => [
-      ...prevElements,
-      <Dialogue>This is a test</Dialogue>,
-    ]);
-    setIdle(true);
-  };
-
   const addElement = () => {
-    if (Math.random() > 0.1) {
+    if (Math.random() > 0.2) {
       fetchComment();
     } else {
-      addDialogue();
+      addDialogue('This is a test');
     }
   };
 
@@ -64,7 +72,7 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     } else {
       Events.emit('incorrect');
       setGameOver(true);
-      addDialogue();
+      addDialogue('Oops, wrong answer');
     }
 
     tempDisable();
