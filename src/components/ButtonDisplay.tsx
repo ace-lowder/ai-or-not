@@ -29,7 +29,7 @@ const ButtonDisplay: React.FC = () => {
   }, [started, idle, gameOver]);
 
   return (
-    <div className="fixed bottom-0 w-full text-white flex p-4 gap-4 z-20">
+    <div className="w-full text-white flex p-4 gap-4 z-20">
       {visibleState === 'start' && <GuessButton type="start" />}
       {visibleState === 'gameOver' && <GuessButton type="restart" />}
       {visibleState === 'idle' && <GuessButton type="continue" />}

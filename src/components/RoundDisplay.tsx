@@ -17,10 +17,10 @@ const RoundDisplay: React.FC = () => {
   }, [round]);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 top-0 flex items-end justify-center overflow-visible z-10">
+    <div className="fixed inset-0 flex items-end justify-center overflow-visible z-10">
       <div
         ref={containerRef}
-        className="relative w-full max-w-96 max-h-screen pt-[10vh] overflow-y-auto scrollbar-hide"
+        className="relative w-full max-w-96 max-h-screen pt-[30vh] overflow-y-auto scrollbar-hide"
       >
         <motion.div className="pb-[50vh] mx-12 flex flex-col gap-8">
           <AnimatePresence initial={true}>

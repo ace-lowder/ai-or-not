@@ -55,15 +55,13 @@ const OverlayEffects: React.FC = () => {
       : '';
 
   return (
-    <>
-      <div
-        className={`animated-background fixed inset-0 z-10 pointer-events-none overflow-hidden ${glowClass} ${
-          glow !== 'none' ? '' : 'transition-all duration-[1500ms] ease-in'
-        }`}
-      >
-        {particles}
-      </div>
-    </>
+    <div
+      className={`fixed inset-0 z-10 pointer-events-none overflow-hidden ${glowClass} ${
+        glow !== 'none' ? '' : 'transition-all duration-[1500ms] ease-in'
+      }`}
+    >
+      {particles}
+    </div>
   );
 };
 
