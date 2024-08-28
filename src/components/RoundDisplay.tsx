@@ -8,7 +8,6 @@ const RoundDisplay: React.FC = () => {
 
   useEffect(() => {
     if (containerRef.current) {
-      // Automatically scroll to the bottom when a new element is added
       containerRef.current.scrollTo({
         top: containerRef.current.scrollHeight,
         behavior: 'smooth',
@@ -30,7 +29,7 @@ const RoundDisplay: React.FC = () => {
                 layout
                 initial={{ opacity: 0, y: 140 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
               >
                 {element}
               </motion.div>
