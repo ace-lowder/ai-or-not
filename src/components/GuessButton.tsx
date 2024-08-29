@@ -38,7 +38,9 @@ const GuessButton: React.FC<GuessButtonProps> = ({ type }) => {
 
   const playSound = (soundFile: string, volume: number) => {
     const audio = new Audio(soundFile);
+    const pitch = Math.random() * 0.2 + 0.8;
     audio.volume = volume;
+    audio.playbackRate = pitch;
     audio.play();
   };
 
@@ -50,7 +52,7 @@ const GuessButton: React.FC<GuessButtonProps> = ({ type }) => {
   const handleClick = useCallback(() => {
     makeGuess(type === 'real');
     handlePressAnimation();
-    playSound(buttonClick, 0.5);
+    playSound(buttonClick, 0.4);
   }, [type, makeGuess, handlePressAnimation]);
 
   useEffect(() => {

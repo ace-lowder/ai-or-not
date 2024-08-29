@@ -5,6 +5,7 @@ import Dialogue from '../components/Dialogue';
 import CommentCard from '../components/CommentCard';
 import correctSound from '../assets/correct.wav';
 import incorrectSound from '../assets/incorrect.wav';
+import wooshSound from '../assets/woosh.mp3';
 
 interface GameContextType {
   started: boolean;
@@ -45,6 +46,7 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     ]);
     setIdCounter(prevId => prevId + 1);
     setIdle(true);
+    playSound(wooshSound, 0.05);
   };
 
   useEffect(() => {
@@ -59,7 +61,9 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const playSound = (soundFile: string, volume: number) => {
     const audio = new Audio(soundFile);
+    const pitch = Math.random() * 0.2 + 0.8;
     audio.volume = volume;
+    audio.playbackRate = pitch;
     audio.play();
   };
 
@@ -74,6 +78,7 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     if (Math.random() > 0.2) {
+      playSound(wooshSound, 0.05);
       fetchComment();
     } else {
       addDialogue('This is a test');
@@ -85,11 +90,11 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
 
     if (fetchedComment.isReal === guess) {
       Events.emit('correct');
-      playSound(correctSound, 0.3);
+      playSound(correctSound, 0.1);
       addElement();
     } else {
       Events.emit('incorrect');
-      playSound(incorrectSound, 0.25);
+      playSound(incorrectSound, 0.07);
       setGameOver(true);
       addDialogue('Oops, wrong answer');
     }
@@ -117,6 +122,7 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
       setIdle(false);
       tempDisable();
       fetchComment();
+      playSound(wooshSound, 0.05);
       return;
     }
 
