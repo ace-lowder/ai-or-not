@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+a {
+  @apply hover:underline;
+}
+
 .particle {
   position: absolute;
   bottom: 0;

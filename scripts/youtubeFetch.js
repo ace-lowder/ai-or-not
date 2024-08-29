@@ -7,7 +7,7 @@ import fs from 'fs';
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
 // Retrieve the YouTube API key from the environment variables
-const API_KEY = process.env.YOUTUBE_API || '';
+const API_KEY = process.env.VITE_YOUTUBE_API || '';
 
 // Log the API key to verify it's being read correctly
 console.log('Using YouTube API Key:', API_KEY);

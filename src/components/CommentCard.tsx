@@ -44,7 +44,10 @@ const CommentCard: React.FC<CommentCardProps> = ({ comment }) => {
           {!hidden && !comment.isReal ? 'Chat GPT' : comment.username}
         </div>
       </div>
-      <div className="text-sm">{comment.comment}</div>
+      <div
+        className="text-sm"
+        dangerouslySetInnerHTML={{ __html: comment.comment || '' }}
+      />
       <div className="text-xs text-gray-500">
         {comment.date} • {comment.likes} likes
       </div>

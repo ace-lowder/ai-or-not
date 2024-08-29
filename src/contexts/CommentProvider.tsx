@@ -1,6 +1,11 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { realComments } from '../data/realComments'; // Importing hard-coded real comments
 import profileTest from '../assets/profile-test.png'; // Default profile picture
+import {
+  decodeHtmlEntities,
+  validateProfilePicture,
+  getYoutubeComments,
+} from '../services/youtubeService'; // Importing helper function
 
 // prettier-ignore
 export interface Comment {
@@ -21,84 +26,93 @@ interface CommentContextType {
 
 const CommentContext = createContext<CommentContextType | undefined>(undefined);
 
-// Function to validate the profile picture using an Image element
-const validateProfilePicture = (
-  url: string,
-  username: string,
-): Promise<string> => {
-  return new Promise(resolve => {
-    const img = new Image();
-    img.src = url;
-
-    img.onload = () => {
-      resolve(url); // Image loaded successfully
-    };
-
-    img.onerror = () => {
-      // Use UI avatar if image fails to load
-      resolve(
-        `https://ui-avatars.com/api/?color=ffffff&name=${encodeURIComponent(
-          username,
-        )}&background=random&length=1`,
-      );
-    };
-  });
-};
-
-// Utility function to decode HTML entities
-const decodeHtmlEntities = (text: string): string => {
-  const textArea = document.createElement('textarea');
-  textArea.innerHTML = text;
-  return textArea.value;
-};
-
 const CommentProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [youtubeCache, setYoutubeCache] = useState<Comment[]>([]); // Updated type to Comment[]
-  const [aiCache, setAiCache] = useState<Comment[]>([]); // Updated type to Comment[]
+  const [youtubeCache, setYoutubeCache] = useState<Comment[]>([]);
+  const [aiCache, setAiCache] = useState<Comment[]>([]);
   const [fetchedComment, setFetchedComment] = useState<Comment | undefined>(
     undefined,
   );
+
+  const didMount = useRef(false);
+  const isFetching = useRef(false);
+
+  // Check local storage on mount
+  useEffect(() => {
+    const storedYoutubeCache = localStorage.getItem('youtubeCache');
+    const storedAiCache = localStorage.getItem('aiCache');
+
+    if (storedYoutubeCache) {
+      setYoutubeCache(JSON.parse(storedYoutubeCache));
+    }
+
+    if (storedAiCache) {
+      setAiCache(JSON.parse(storedAiCache));
+    }
+
+    didMount.current = true;
+  }, []);
+
+  // Update local storage whenever youtubeCache or aiCache changes
+  useEffect(() => {
+    if (didMount.current) {
+      localStorage.setItem('youtubeCache', JSON.stringify(youtubeCache));
+      localStorage.setItem('aiCache', JSON.stringify(aiCache));
+    }
+  }, [youtubeCache, aiCache]);
+
+  useEffect(() => {
+    // Avoid fetching if youtubeCache is sufficient
+    if (youtubeCache.length > 5 || isFetching.current) {
+      return;
+    }
+
+    // Set fetching flag before starting to fetch
+    isFetching.current = true;
+
+    // Fetch comments
+    getYoutubeComments().then(comments => {
+      setYoutubeCache(prevCache => {
+        // If the previous cache is still sufficient, no need to add more comments
+        if (prevCache.length > 5) {
+          isFetching.current = false;
+          return prevCache;
+        }
+
+        const updatedCache = [...prevCache, ...comments];
+        localStorage.setItem('youtubeCache', JSON.stringify(updatedCache)); // Update local storage
+        isFetching.current = false;
+        return updatedCache;
+      });
+    });
+  }, [youtubeCache]); // Watching youtubeCache for changes
 
   const fetchComment = async () => {
     let comment: Comment;
 
     if (Math.random() > 0.5) {
-      // Attempt to fetch a real comment from the cache
       if (youtubeCache.length > 0) {
-        comment = youtubeCache.shift()!; // Use comment from YouTube cache
-      } else if (realComments.length > 0) {
-        comment = realComments[Math.floor(Math.random() * realComments.length)]; // Fallback to hard-coded real comments
-
-        // Decode HTML entities in the comment text
-        comment.comment = decodeHtmlEntities(comment.comment);
-
-        // Validate the profile picture URL using an Image element
-        const validatedProfilePicture = await validateProfilePicture(
-          comment.profilePicture,
-          comment.username,
-        );
-        comment.profilePicture = validatedProfilePicture;
+        comment = youtubeCache.shift()!;
+        setYoutubeCache([...youtubeCache]); // Update the state with shifted cache
+        localStorage.setItem('youtubeCache', JSON.stringify(youtubeCache)); // Update local storage
       } else {
-        // If both caches are empty, fallback to a default real comment (if needed)
-        comment = {
-          profilePicture: profileTest,
-          username: 'Default User',
-          comment: 'Default real comment.',
-          likes: 0,
-          date: new Date().toISOString().split('T')[0],
-          isReal: true,
-          videoName: 'Default Video',
-          video: 'https://example.com/default-video-thumbnail.jpg',
-        };
+        comment = realComments[Math.floor(Math.random() * realComments.length)];
       }
+
+      comment.comment = decodeHtmlEntities(comment.comment);
+
+      const validatedProfilePicture = await validateProfilePicture(
+        comment.profilePicture,
+        comment.username,
+      );
+      comment.profilePicture = validatedProfilePicture;
     } else {
-      // Fetch an AI-generated comment from the cache
       if (aiCache.length > 0) {
-        comment = aiCache.shift()!; // Use comment from AI cache
+        comment = aiCache.shift()!;
+        setAiCache([...aiCache]); // Update the state with shifted cache
+        localStorage.setItem('aiCache', JSON.stringify(aiCache)); // Update local storage
       } else {
-        // Fallback to default AI comment
         comment = {
           profilePicture: profileTest,
           username: 'AI ChatBot',
