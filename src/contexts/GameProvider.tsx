@@ -3,6 +3,8 @@ import { useComment } from './CommentProvider';
 import { Events } from './Events';
 import Dialogue from '../components/Dialogue';
 import CommentCard from '../components/CommentCard';
+import correctSound from '../assets/correct.wav';
+import incorrectSound from '../assets/incorrect.wav';
 
 interface GameContextType {
   started: boolean;
@@ -55,6 +57,12 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [fetchedComment]);
 
+  const playSound = (soundFile: string, volume: number) => {
+    const audio = new Audio(soundFile);
+    audio.volume = volume;
+    audio.play();
+  };
+
   const addElement = () => {
     const lastFiveElements = round.slice(-5);
     const hasDialogue = lastFiveElements.some(
@@ -77,9 +85,11 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
 
     if (fetchedComment.isReal === guess) {
       Events.emit('correct');
+      playSound(correctSound, 0.3);
       addElement();
     } else {
       Events.emit('incorrect');
+      playSound(incorrectSound, 0.25);
       setGameOver(true);
       addDialogue('Oops, wrong answer');
     }

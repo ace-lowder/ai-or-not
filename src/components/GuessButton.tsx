@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useGame } from '../contexts/GameProvider';
 import { FaRobot, FaPlay, FaArrowRight, FaSync } from 'react-icons/fa';
 import { IoPerson } from 'react-icons/io5';
+import buttonClick from '../assets/click.mp3';
 
 interface GuessButtonProps {
   type: 'ai' | 'real' | 'start' | 'continue' | 'restart';
@@ -35,6 +36,12 @@ const GuessButton: React.FC<GuessButtonProps> = ({ type }) => {
     restart: pressed ? 'bg-red-200' : 'bg-red-500',
   };
 
+  const playSound = (soundFile: string, volume: number) => {
+    const audio = new Audio(soundFile);
+    audio.volume = volume;
+    audio.play();
+  };
+
   const handlePressAnimation = useCallback(() => {
     setPressed(true);
     setTimeout(() => setPressed(false), 100);
@@ -43,6 +50,7 @@ const GuessButton: React.FC<GuessButtonProps> = ({ type }) => {
   const handleClick = useCallback(() => {
     makeGuess(type === 'real');
     handlePressAnimation();
+    playSound(buttonClick, 0.5);
   }, [type, makeGuess, handlePressAnimation]);
 
   useEffect(() => {

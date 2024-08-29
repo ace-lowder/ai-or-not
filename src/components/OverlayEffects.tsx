@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Events } from '../contexts/Events';
 import Particle from './Particle';
-import correctSound from '../assets/correct.wav';
-import incorrectSound from '../assets/incorrect.wav';
 
 const OverlayEffects: React.FC = () => {
   const [glow, setGlow] = useState<'none' | 'green' | 'red'>('none');
@@ -12,10 +10,6 @@ const OverlayEffects: React.FC = () => {
     const glow = (color: 'green' | 'red') => {
       setGlow(color);
       setTimeout(() => setGlow('none'), 100);
-    };
-
-    const playSound = (soundFile: string) => {
-      new Audio(soundFile).play();
     };
 
     const generateParticles = (color: string) => {
@@ -28,13 +22,11 @@ const OverlayEffects: React.FC = () => {
 
     const handleCorrect = () => {
       glow('green');
-      playSound(correctSound);
       generateParticles('green');
     };
 
     const handleIncorrect = () => {
       glow('red');
-      playSound(incorrectSound);
       generateParticles('red');
     };
 
