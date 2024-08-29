@@ -36,7 +36,7 @@ const CommentProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const didMount = useRef(false);
-  const isFetching = useRef(false);
+  const isFetching = useRef(true);
 
   // Check local storage on mount
   useEffect(() => {
@@ -51,7 +51,10 @@ const CommentProvider: React.FC<{ children: React.ReactNode }> = ({
       setAiCache(JSON.parse(storedAiCache));
     }
 
-    didMount.current = true;
+    setTimeout(() => {
+      didMount.current = true;
+      isFetching.current = false;
+    }, 1000);
   }, []);
 
   // Update local storage whenever youtubeCache or aiCache changes
