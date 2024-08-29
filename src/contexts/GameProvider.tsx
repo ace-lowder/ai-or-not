@@ -6,6 +6,7 @@ import CommentCard from '../components/CommentCard';
 import correctSound from '../assets/correct.wav';
 import incorrectSound from '../assets/incorrect.wav';
 import wooshSound from '../assets/woosh.mp3';
+import logo from '../assets/logo.png';
 
 interface GameContextType {
   started: boolean;
@@ -36,8 +37,16 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (didMount.current) return;
     didMount.current = true;
+    addLogo();
     addDialogue('Press a button to start the round');
   }, []);
+
+  const addLogo = () => {
+    setRound(prevElements => [
+      ...prevElements,
+      { id: -1, element: <img className="w-full h-auto" src={logo} /> },
+    ]);
+  };
 
   const addDialogue = (text: string) => {
     setRound(prevElements => [
