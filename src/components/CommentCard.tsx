@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import profileAI from '../assets/profile-ai.png';
 import { Events } from '../contexts/Events';
+import { validateProfilePicture } from '../services/youtubeService'; // Make sure to import validateProfilePicture
 
 interface Comment {
   profilePicture: string;
@@ -19,6 +20,9 @@ interface CommentCardProps {
 
 const CommentCard: React.FC<CommentCardProps> = ({ comment }) => {
   const [hidden, setHidden] = useState(true);
+  const [validatedProfilePicture, setValidatedProfilePicture] = useState(
+    comment.profilePicture,
+  );
 
   useEffect(() => {
     const reveal = () => setHidden(false);
@@ -32,11 +36,20 @@ const CommentCard: React.FC<CommentCardProps> = ({ comment }) => {
     };
   }, []);
 
+  useEffect(() => {
+    // Validate the profile picture whenever the component mounts or the profile picture changes
+    validateProfilePicture(comment.profilePicture, comment.username).then(
+      validatedUrl => {
+        setValidatedProfilePicture(validatedUrl);
+      },
+    );
+  }, [comment.profilePicture, comment.username]);
+
   return (
     <div className="max-w-md bg-white rounded shadow-lg p-4 text-gray-900 flex flex-col gap-2">
       <div className="flex items-center">
         <img
-          src={!hidden && !comment.isReal ? profileAI : comment.profilePicture}
+          src={!hidden && !comment.isReal ? profileAI : validatedProfilePicture}
           alt="Profile"
           className="w-8 h-8 rounded-full mr-2"
         />

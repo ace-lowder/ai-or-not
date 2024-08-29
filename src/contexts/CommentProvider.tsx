@@ -3,7 +3,6 @@ import { realComments } from '../data/realComments'; // Importing hard-coded rea
 import profileTest from '../assets/profile-test.png'; // Default profile picture
 import {
   decodeHtmlEntities,
-  validateProfilePicture,
   getYoutubeComments,
 } from '../services/youtubeService'; // Importing helper function
 
@@ -45,16 +44,26 @@ const CommentProvider: React.FC<{ children: React.ReactNode }> = ({
 
     if (storedYoutubeCache) {
       setYoutubeCache(JSON.parse(storedYoutubeCache));
+    } else {
+      getYoutubeComments().then(comments => {
+        setYoutubeCache(prevCache => {
+          const updatedCache = [...prevCache, ...comments];
+          localStorage.setItem('youtubeCache', JSON.stringify(updatedCache)); // Update local storage
+          return updatedCache;
+        });
+      });
     }
 
     if (storedAiCache) {
       setAiCache(JSON.parse(storedAiCache));
+    } else {
+      localStorage.setItem('aiCache', JSON.stringify(aiCache));
     }
 
     setTimeout(() => {
       didMount.current = true;
       isFetching.current = false;
-    }, 1000);
+    }, 2000);
   }, []);
 
   // Update local storage whenever youtubeCache or aiCache changes
@@ -104,12 +113,6 @@ const CommentProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       comment.comment = decodeHtmlEntities(comment.comment);
-
-      const validatedProfilePicture = await validateProfilePicture(
-        comment.profilePicture,
-        comment.username,
-      );
-      comment.profilePicture = validatedProfilePicture;
     } else {
       if (aiCache.length > 0) {
         comment = aiCache.shift()!;

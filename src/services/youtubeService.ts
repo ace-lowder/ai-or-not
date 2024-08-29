@@ -94,26 +94,37 @@ export const getTopPopularVideos = async (): Promise<VideoItem[]> => {
   }
 };
 
-// Function to fetch a comment from a specific video
+// Function to fetch a random comment from a specific video
 export const fetchCommentFromVideo = async (
   videoId: string,
   videoTitle: string,
 ): Promise<Comment | null> => {
   try {
-    console.error('[API CALL] Fetching Comment');
+    console.error('[API CALL] Fetching Comments');
+
+    // Fetch a larger set of comments (up to 100)
     const response = await axios.get(
       'https://www.googleapis.com/youtube/v3/commentThreads',
       {
         params: {
           part: 'snippet',
           videoId: videoId,
-          maxResults: 1, // Fetching 1 comment
+          maxResults: 20, // Fetching more comments to increase randomness
           key: API_KEY,
         },
       },
     );
 
-    const item = response.data.items[0];
+    const items = response.data.items;
+
+    if (items.length === 0) {
+      return null; // No comments found
+    }
+
+    // Select a random comment from the fetched list
+    const randomIndex = Math.floor(Math.random() * items.length);
+    const item = items[randomIndex];
+
     const comment: Comment = {
       profilePicture:
         item.snippet.topLevelComment.snippet.authorProfileImageUrl,
