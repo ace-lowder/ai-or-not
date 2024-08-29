@@ -6,21 +6,28 @@ interface DialogueProps {
 
 const Dialogue: React.FC<DialogueProps> = ({ children }) => {
   const words = children.split(' ');
-  const [visibleWords, setVisibleWords] = useState<string[]>([words[0]]);
-  const currentIndex = useRef(1);
+  const [visibleWords, setVisibleWords] = useState<string[]>(['']);
+  const currentIndex = useRef(0);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (currentIndex.current < words.length) {
-        const nextWord = words[currentIndex.current];
-        setVisibleWords(prevWords => [...prevWords, nextWord]);
-        currentIndex.current += 1;
-      } else {
-        clearInterval(interval);
-      }
-    }, visibleWords[visibleWords.length - 1].length * 20 + 100);
+    // Set a timeout to delay the start of the interval
+    const timeout = setTimeout(() => {
+      const interval = setInterval(() => {
+        if (currentIndex.current < words.length) {
+          const nextWord = words[currentIndex.current];
+          setVisibleWords(prevWords => [...prevWords, nextWord]);
+          currentIndex.current += 1;
+        } else {
+          clearInterval(interval); // Clear the interval when all words are shown
+        }
+      }, visibleWords[visibleWords.length - 1].length * 2 + 180);
 
-    return () => clearInterval(interval);
+      // Cleanup the interval when the component unmounts
+      return () => clearInterval(interval);
+    }, 200); // 400ms delay before the interval starts
+
+    // Cleanup the timeout to prevent memory leaks
+    return () => clearTimeout(timeout);
   }, [words]);
 
   return (
