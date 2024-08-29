@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import hiddenProfile from '../assets/profile-test.png';
+import profileAI from '../assets/profile-ai.png';
 import { Events } from '../contexts/Events';
 
 interface Comment {
@@ -36,7 +36,7 @@ const CommentCard: React.FC<CommentCardProps> = ({ comment }) => {
     <div className="max-w-md bg-white rounded shadow-lg p-4 text-gray-900 flex flex-col gap-2">
       <div className="flex items-center">
         <img
-          src={hidden ? hiddenProfile : comment.profilePicture}
+          src={!hidden && !comment.isReal ? profileAI : comment.profilePicture}
           alt="Profile"
           className="w-8 h-8 rounded-full mr-2"
         />
