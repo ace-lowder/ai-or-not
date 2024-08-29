@@ -45,6 +45,13 @@ const validateProfilePicture = (
   });
 };
 
+// Utility function to decode HTML entities
+const decodeHtmlEntities = (text: string): string => {
+  const textArea = document.createElement('textarea');
+  textArea.innerHTML = text;
+  return textArea.value;
+};
+
 const CommentProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -64,6 +71,9 @@ const CommentProvider: React.FC<{ children: React.ReactNode }> = ({
       } else if (realComments.length > 0) {
         comment = realComments[Math.floor(Math.random() * realComments.length)]; // Fallback to hard-coded real comments
 
+        // Decode HTML entities in the comment text
+        comment.comment = decodeHtmlEntities(comment.comment);
+
         // Validate the profile picture URL using an Image element
         const validatedProfilePicture = await validateProfilePicture(
           comment.profilePicture,
@@ -77,7 +87,7 @@ const CommentProvider: React.FC<{ children: React.ReactNode }> = ({
           username: 'Default User',
           comment: 'Default real comment.',
           likes: 0,
-          date: new Date().toISOString(),
+          date: new Date().toISOString().split('T')[0],
           isReal: true,
           videoName: 'Default Video',
           video: 'https://example.com/default-video-thumbnail.jpg',

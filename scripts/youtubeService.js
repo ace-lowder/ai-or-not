@@ -65,7 +65,7 @@ const fetchCommentsFromVideo = async (videoId, videoName, videoThumbnail) => {
       ), // Remove @ symbol from username
       comment: item.snippet.topLevelComment.snippet.textDisplay,
       likes: item.snippet.topLevelComment.snippet.likeCount,
-      date: item.snippet.topLevelComment.snippet.publishedAt,
+      date: item.snippet.topLevelComment.snippet.publishedAt.split('T')[0], // Only keep the date part
       isReal: true,
       videoName: videoName, // Use the actual video name
       video: videoThumbnail, // Use the medium-sized video thumbnail URL
