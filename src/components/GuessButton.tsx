@@ -83,7 +83,7 @@ const GuessButton: React.FC<GuessButtonProps> = ({ type }) => {
 
   return (
     <button
-      className={`flex-grow flex flex-col items-center gap-1 text-sm text-white font-bold pt-6 px-4 rounded-2xl rounded-b-3xl border border-gray-700 border-4 ${
+      className={`relative flex-grow flex flex-col items-center gap-1 text-sm text-white font-bold pt-6 px-4 rounded-2xl rounded-b-3xl border border-gray-700 border-4 ${
         pressed
           ? `${bgColorMap[type]} pb-4 border-b-[6px] mt-2`
           : `${bgColorMap[type]} pb-6 border-b-[12px] transition-all duration-300`
@@ -92,6 +92,16 @@ const GuessButton: React.FC<GuessButtonProps> = ({ type }) => {
       disabled={disabled}
     >
       {iconMap[type]} {textMap[type]}
+      {type === 'ai' && (
+        <div className="hidden md:block absolute top-2 left-2 px-1.5 py-0.5 text-xs font-bold text-blue-800 bg-blue-200 rounded-md opacity-50">
+          A
+        </div>
+      )}
+      {type === 'real' && (
+        <div className="hidden md:block absolute top-2 right-2 px-1.5 py-0.5 text-xs font-bold text-red-800 bg-red-200 rounded-md opacity-50">
+          D
+        </div>
+      )}
     </button>
   );
 };
