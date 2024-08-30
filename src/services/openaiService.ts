@@ -51,7 +51,7 @@ const generateFakeCommentText = async (
     - Not longer than the real comment
     - Half its length in characters. 2 sentences max
     - Has casual grammar and very minor typos
-    - Mostly lowercase (Only capitalize the first letter of the first word)
+    - ONLY CAPITALIZE THE FIRST LETTER OF THE FIRST WORD IN THE FIRST SENTENCE
     - DO NOT USE COMMAS OR APOSTRAPHES
     - DO NOT USE PERIODS AT THE END OF COMMENTS
     - 1 letter missing max per word. 3 letters missing max per comment
@@ -79,6 +79,8 @@ const generateFakeCommentText = async (
     "Stolen Jokes. Generic stolen jokes, e.g., 'We gettin out the hood with this one 🔥🔥🔥'",
     "Long words. Multiple vowels together or letters at the end, e.g., 'whaaaaaat was thatttttttt'",
     "Emojis. Just emojis, nothing else e.g., '💃💃💃💃💃💃'",
+    "Shipper. Wants the youtuber to be in a relationship e.g., 'Dan should date Gio ngl'",
+    "Request Kid. Asks for new video, no punctuation e.g., 'Can you do five nights at freddys next Foxy is my favorite'",
   ];
 
   const selectedPersona = personas[Math.floor(Math.random() * personas.length)];
