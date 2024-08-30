@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useScore } from '../contexts/ScoreProvider';
 import { Events } from '../contexts/Events';
+import switchSound from '../assets/switch.mp3';
 
 const ScoreDisplay: React.FC = () => {
   const { score, hiscore } = useScore();
@@ -27,6 +28,14 @@ const ScoreDisplay: React.FC = () => {
     };
   }, []);
 
+  const playSound = (soundFile: string, volume: number) => {
+    const audio = new Audio(soundFile);
+    const pitch = Math.random() * 0.2 + 0.8;
+    audio.volume = volume;
+    audio.playbackRate = pitch;
+    audio.play();
+  };
+
   return (
     <div
       className={`relative bg-gray-800 font-bold rounded-xl w-14 h-14 flex items-center justify-center outline outline-gray-700 outline-4 shadow-lg hover:duration-0 hover:outline-gray-400 hover:bg-gray-700 cursor-pointer select-none ${
@@ -34,7 +43,10 @@ const ScoreDisplay: React.FC = () => {
           ? `${fadeColor} text-3xl`
           : 'text-white transition-all duration-300 text-2xl'
       }`}
-      onMouseEnter={() => setIsHovered(true)}
+      onMouseEnter={() => {
+        playSound(switchSound, 0.02);
+        setIsHovered(true);
+      }}
       onMouseLeave={() => setIsHovered(false)}
     >
       {score}

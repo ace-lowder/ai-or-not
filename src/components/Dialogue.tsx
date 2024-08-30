@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useGame } from '../contexts/GameProvider';
 import { useScore } from '../contexts/ScoreProvider';
 import { useComment } from '../contexts/CommentProvider';
+import beepSound from '../assets/beep.mp3';
 
 interface DialogueProps {
   children?: string;
@@ -194,33 +195,37 @@ const Dialogue: React.FC<DialogueProps> = ({ children }) => {
     return responses[Math.floor(Math.random() * responses.length)];
   };
 
-  // Store the selected dialogue in a state variable
   const [selectedDialogue] = useState<string>(children || chooseResponse());
 
-  // Set a default value for words to handle cases where selectedDialogue is empty
   const words = selectedDialogue ? selectedDialogue.split(' ') : [];
   const [visibleWords, setVisibleWords] = useState<string[]>(['']);
+
+  const playSound = (soundFile: string, volume: number) => {
+    const audio = new Audio(soundFile);
+    const pitch = Math.random() * 2 + 4;
+    audio.volume = volume;
+    audio.playbackRate = pitch;
+    audio.play();
+  };
 
   useEffect(() => {
     if (words.length === 0) return;
 
-    // Set a timeout to delay the start of the interval
     const timeout = setTimeout(() => {
       const interval = setInterval(() => {
         if (currentIndex.current < words.length) {
+          playSound(beepSound, 0.05);
           const nextWord = words[currentIndex.current];
           setVisibleWords(prevWords => [...prevWords, nextWord]);
           currentIndex.current += 1;
         } else {
-          clearInterval(interval); // Clear the interval when all words are shown
+          clearInterval(interval);
         }
       }, visibleWords[visibleWords.length - 1].length * 2 + 180);
 
-      // Cleanup the interval when the component unmounts
       return () => clearInterval(interval);
-    }, 200); // 200ms delay before the interval starts
+    }, 200);
 
-    // Cleanup the timeout to prevent memory leaks
     return () => clearTimeout(timeout);
   }, [words]);
 
