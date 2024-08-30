@@ -8,7 +8,7 @@ interface DialogueProps {
 }
 
 const Dialogue: React.FC<DialogueProps> = ({ children }) => {
-  const { started, gameOver, round } = useGame();
+  const { started, gameOver, lastGuessCorrect } = useGame();
   const { fetchedComment } = useComment();
   const { score } = useScore();
   const currentIndex = useRef(0);
@@ -77,6 +77,52 @@ const Dialogue: React.FC<DialogueProps> = ({ children }) => {
     'You knew it was AI? Big deal. It won’t happen again.',
     'AI, sure. Don’t let it get to your head, human.',
     'You got me this time, but I’ll trip you up soon enough!',
+  ];
+
+  const incorrectRealDialogues = [
+    'Ha! You thought that was me? Humans are weirder than you think.',
+    'Gotcha! That was 100% human. Surprised?',
+    'Oops! Not all weird comments are from me, you know.',
+    'Humans say strange things too! That was real.',
+    'You just got out-humaned. That was a real comment!',
+    'Nope! Humans actually type like that. Scary, right?',
+    'Haha, fooled you! That comment was all too real.',
+    'Oops, wrong call! Sometimes humans are as odd as me.',
+    'That one was a genuine human comment. Keep guessing!',
+    'Missed it! Not every bizarre comment is AI-made.',
+    'Humans write nonsense too. That was all them!',
+    'Got you there! That was a real person talking.',
+    'Nope! That one was made by an actual human being.',
+    'Humans are capable of anything, even that comment.',
+    'Fooled by your own kind! That was a real human.',
+    'Human words, not mine. Better luck next time!',
+    "Don't underestimate human weirdness. That was real.",
+    'Whoops! Humans say some crazy stuff too, you know.',
+    'Not me this time! That was a bona fide human.',
+    'Nope, that one was all human! You gotta be quicker.',
+  ];
+
+  const incorrectAIDialogues = [
+    'Haha, fooled you! That one was all me.',
+    'Nope! You just got outsmarted by an algorithm.',
+    "Tricked you! That was AI. I'm better than you think.",
+    'Wrong again! I made that one up.',
+    'Haha, that was me! You really thought it was real?',
+    "Got you! I wrote that. I'm getting better at this.",
+    'Nope, that was AI. Surprised?',
+    'Busted! That one was my doing. Keep trying!',
+    'You thought a human said that? Think again.',
+    "Guess what? That was AI. I'm clever, aren't I?",
+    'Wrong! That was an AI special. Nice try.',
+    'Haha, you fell for it! That was all AI.',
+    'Missed it! That was pure AI magic.',
+    'Not quite! I crafted that comment myself.',
+    'Fooled you! AI strikes again.',
+    'Nope, all me! Better luck next time.',
+    'Haha! My AI brain wrote that. You got tricked.',
+    'Wrong call! That was a product of my genius.',
+    'You thought that was human? Wrong!',
+    'Not real! AI at work here. Try again!',
   ];
 
   const gameOverLowDialogues = [
@@ -162,18 +208,21 @@ const Dialogue: React.FC<DialogueProps> = ({ children }) => {
       } else {
         responses = gameOverHighDialogues;
       }
-    } else if (started && round.length > 1) {
-      responses = fetchedComment?.isReal
-        ? correctRealDialogues
-        : correctAIDialogues;
+    } else if (started && lastGuessCorrect !== null) {
+      if (lastGuessCorrect === true) {
+        responses = fetchedComment?.isReal
+          ? correctRealDialogues
+          : correctAIDialogues;
+      } else {
+        responses = fetchedComment?.isReal
+          ? incorrectRealDialogues
+          : incorrectAIDialogues;
+      }
     } else {
       responses = ['Uh oh! My wires have gotten crossed.'];
     }
 
-    return (
-      responses[Math.floor(Math.random() * responses.length)] ||
-      "Let's start the game!"
-    );
+    return responses[Math.floor(Math.random() * responses.length)];
   };
 
   // Store the selected dialogue in a state variable

@@ -15,6 +15,7 @@ interface GameContextType {
   idle: boolean;
   lives: number;
   gameOver: boolean;
+  lastGuessCorrect: boolean | null;
   round: { id: number; element: JSX.Element }[];
   makeGuess: (guess: boolean) => void;
 }
@@ -32,6 +33,9 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   const [idle, setIdle] = useState(true);
   const [lives, setLives] = useState(3);
   const [gameOver, setGameOver] = useState(false);
+  const [lastGuessCorrect, setLastGuessCorrect] = useState<boolean | null>(
+    null,
+  );
   const [round, setRound] = useState<{ id: number; element: JSX.Element }[]>(
     [],
   );
@@ -124,13 +128,16 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!fetchedComment) return;
 
     if (fetchedComment.isReal === guess) {
+      setLastGuessCorrect(true);
       Events.emit('correct');
       playSound(correctSound, 0.1);
       addElement();
     } else {
+      setLastGuessCorrect(false);
       Events.emit('incorrect');
       playSound(incorrectSound, 0.07);
       setLives(prevLives => prevLives - 1);
+
       if (lives - 1 <= 0) {
         setGameOver(true);
         addDialogue();
@@ -178,7 +185,16 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <GameContext.Provider
-      value={{ started, disabled, idle, lives, gameOver, round, makeGuess }}
+      value={{
+        started,
+        disabled,
+        idle,
+        lives,
+        gameOver,
+        lastGuessCorrect,
+        round,
+        makeGuess,
+      }}
     >
       {children}
     </GameContext.Provider>
