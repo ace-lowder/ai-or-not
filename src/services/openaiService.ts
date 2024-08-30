@@ -50,19 +50,16 @@ const generateFakeCommentText = async (
   const basePrompt = `Based on the video titled "${videoTitle}" and the real comment: "${realComment}", write an original YouTube comment with these rules:
     - Not longer than the real comment
     - Half its length in characters. 2 sentences max
-    - Has casual grammar and very minor typos, 
+    - Has casual grammar and very minor typos
     - NO MISSING LETTERS IN WORDS
     - DO NOT USE COMMAS OR APOSTRAPHES
     - DO NOT USE PERIODS AT THE END OF COMMENTS
-    - If negative or bored, keep it very short and limit to 1 sentence
-    - Avoid hashtags
-    - If using slang, ensure it fits the context
-    - No 'um', 'uh', 'ugh', 'dat', 'gr8', 'luv', 'dhat', 'enuf', 'meen', 'vidz', or 'dis'
+    - DO NOT USE 'um', 'uh', 'ugh', 'dat', 'gr8', 'luv', 'dhat', 'enuf', 'meen', 'vidz', or 'dis'
     - DO NOT START WITH 'Wow', 'Omg', 'Oh', 'Yeah', or 'Yo'
-    - DO NOT REPLACE 'are' with 'r'
-    - DO NOT REPLACE 'why' with 'y'
-    - DO NOT REPLACE 'and' with 'n'
-    - Do NOT REPLACE 'th' with 'd' e.g. 'thats' to 'dats'
+    - DO NOT REPLACE 'are' with 'r', 'why' with 'y', 'and' with 'n', 'th' with 'd' e.g. 'why are thats' to 'y r dats'
+    - If negative or bored, keep it very short and limit to 1 sentence
+    - If using slang, ensure it fits the context
+    - Avoid hashtags
     - If you have more than one sentence and the last sentence is short, remove it
     - Follow these rules exactly, unless the persona you get says otherwise
     
@@ -121,8 +118,8 @@ const generateFakeCommentText = async (
 
     let commentText = response.data.choices[0].message.content.trim();
 
-    // 90% of the time, capitalize the first letter of the comment text string
-    if (Math.random() < 0.9)
+    // 95% of the time, capitalize the first letter of the comment text string
+    if (Math.random() < 0.95)
       commentText = commentText.charAt(0).toUpperCase() + commentText.slice(1);
     else
       commentText = commentText.charAt(0).toLowerCase() + commentText.slice(1);
@@ -130,8 +127,8 @@ const generateFakeCommentText = async (
     let typos = 0;
     const maxTypos = 3; // Artificial typos limit
 
-    while (Math.random() < 0.8 && typos < maxTypos) {
-      if (Math.random() < 0.2) {
+    while (Math.random() < 0.6 && typos < maxTypos) {
+      if (Math.random() < 0.15) {
         const randomIndex = Math.floor(Math.random() * commentText.length);
         commentText =
           commentText.slice(0, randomIndex) +
@@ -140,8 +137,8 @@ const generateFakeCommentText = async (
       }
     }
 
-    while (Math.random() < 0.8 && typos < maxTypos) {
-      if (Math.random() < 0.2) {
+    while (Math.random() < 0.6 && typos < maxTypos) {
+      if (Math.random() < 0.15) {
         const randomIndex = Math.floor(
           Math.random() * (commentText.length - 2),
         );

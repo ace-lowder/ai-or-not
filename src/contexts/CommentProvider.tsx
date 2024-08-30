@@ -149,6 +149,7 @@ const CommentProvider: React.FC<{ children: React.ReactNode }> = ({
         localStorage.setItem('aiCache', JSON.stringify(aiCache));
       } else {
         comment = fakeComments[Math.floor(Math.random() * fakeComments.length)];
+        comment.date = new Date().toISOString().slice(0, 10);
       }
     }
 
