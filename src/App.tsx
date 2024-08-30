@@ -19,15 +19,17 @@ function App() {
           <InfoButton />
         </div>
 
-        <CommentProvider>
-          <GameProvider>
-            <div className="grow">
-              <RoundDisplay />
-            </div>
+        <ScoreProvider>
+          <CommentProvider>
+            <GameProvider>
+              <div className="grow">
+                <RoundDisplay />
+              </div>
 
-            <ButtonDisplay />
-          </GameProvider>
-        </CommentProvider>
+              <ButtonDisplay />
+            </GameProvider>
+          </CommentProvider>
+        </ScoreProvider>
       </div>
 
       <div className="animated-background fixed inset-0 z-0" />

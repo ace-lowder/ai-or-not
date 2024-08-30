@@ -38,7 +38,7 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     if (didMount.current) return;
     didMount.current = true;
     addLogo();
-    addDialogue('Press a button to start the round');
+    addDialogue();
   }, []);
 
   const addLogo = () => {
@@ -48,10 +48,10 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     ]);
   };
 
-  const addDialogue = (text: string) => {
+  const addDialogue = () => {
     setRound(prevElements => [
       ...prevElements,
-      { id: idCounter, element: <Dialogue>{text}</Dialogue> },
+      { id: idCounter, element: <Dialogue /> },
     ]);
     setIdCounter(prevId => prevId + 1);
     setIdle(true);
@@ -82,7 +82,7 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
       element => element.element.type === Dialogue,
     );
     if (!hasDialogue) {
-      addDialogue('This is a test');
+      addDialogue();
       return;
     }
 
@@ -90,7 +90,7 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
       playSound(wooshSound, 0.05);
       fetchComment();
     } else {
-      addDialogue('This is a test');
+      addDialogue();
     }
   };
 
@@ -105,7 +105,7 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
       Events.emit('incorrect');
       playSound(incorrectSound, 0.07);
       setGameOver(true);
-      addDialogue('Oops, wrong answer');
+      addDialogue();
     }
 
     tempDisable();
