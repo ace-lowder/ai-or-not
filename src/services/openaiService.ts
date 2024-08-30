@@ -57,19 +57,24 @@ const generateFakeCommentText = async (
     - If negative or bored, keep it very short and limit to 1 sentence
     - Avoid hashtags
     - If using slang, ensure it fits the context
-    - No 'um' or 'uh'.
+    - No 'um', 'uh', 'ugh', 'dat', 'gr8', 'luv', 'dhat', 'enuf', 'meen', 'vidz', or 'dis'
+    - DO NOT START WITH 'Wow', 'Omg', 'Oh', 'Yeah', or 'Yo'
+    - DO NOT REPLACE 'are' with 'r'
+    - DO NOT REPLACE 'why' with 'y'
+    - DO NOT REPLACE 'and' with 'n'
+    - Do NOT REPLACE 'th' with 'd' e.g. 'thats' to 'dats'
     - If you have more than one sentence and the last sentence is short, remove it
     - Follow these rules exactly, unless the persona you get says otherwise
     
     Here is your Persona: `;
 
   const personas = [
-    "Confused child. Simple words, bad grammar, no caps, some typos, e.g., 'i dnt get it why'",
+    "Confused child. Simple words, bad grammar, no caps, some typos, e.g., 'i dont get it why they evl'",
     "Child using slang. Emotional, bad grammar, e.g., 'Dat was lit frfr. stop cappin'",
     "Troll. Short, mocking, e.g., 'Ur video is bad'",
     "Angry. Frustrated, short, e.g., 'u stupid like why the hell idiot'",
     "Incoherent. Broken English, typos, e.g., 'Very good me like'",
-    "Enthusiastic fan. Excited, use emojis, include timestamp, e.g., 'Wow 7:24 😂😂!! '",
+    "Enthusiastic fan. Excited, use emojis, include timestamp, e.g., 'Ya 7:24 😂😂!! '",
     "Casual viewer. Polite, short, e.g., 'Good vid'",
     "Ranter. Off-topic rant, short, e.g., 'Honestly should be put in jail'",
     "Fan critic. Positive then critical, e.g., 'Love u but this aint it'",
@@ -122,11 +127,33 @@ const generateFakeCommentText = async (
     else
       commentText = commentText.charAt(0).toLowerCase() + commentText.slice(1);
 
-    // 10% of the time, remove one random character from the comment text string
-    if (Math.random() < 0.1) {
-      const randomIndex = Math.floor(Math.random() * commentText.length);
-      commentText =
-        commentText.slice(0, randomIndex) + commentText.slice(randomIndex + 1);
+    let typos = 0;
+    const maxTypos = 3; // Artificial typos limit
+
+    while (Math.random() < 0.8 && typos < maxTypos) {
+      if (Math.random() < 0.2) {
+        const randomIndex = Math.floor(Math.random() * commentText.length);
+        commentText =
+          commentText.slice(0, randomIndex) +
+          commentText.slice(randomIndex + 1);
+        typos++;
+      }
+    }
+
+    while (Math.random() < 0.8 && typos < maxTypos) {
+      if (Math.random() < 0.2) {
+        const randomIndex = Math.floor(
+          Math.random() * (commentText.length - 2),
+        );
+        const char1 = commentText[randomIndex];
+        const char2 = commentText[randomIndex + 1];
+        commentText =
+          commentText.slice(0, randomIndex) +
+          char2 +
+          char1 +
+          commentText.slice(randomIndex + 2);
+        typos++;
+      }
     }
 
     return commentText;
