@@ -10,8 +10,8 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 const API_KEY = process.env.VITE_YOUTUBE_API || '';
 const OPENAI_API_KEY = process.env.VITE_OPENAI_API_KEY || '';
 
-// Function to get the top popular video ID along with video name and thumbnail
-const getTopPopularVideo = async () => {
+// Function to get the top 30 popular video IDs along with video names and thumbnails
+const getTopPopularVideos = async () => {
   try {
     const response = await axios.get(
       'https://www.googleapis.com/youtube/v3/videos',
@@ -20,25 +20,24 @@ const getTopPopularVideo = async () => {
           part: 'id,snippet',
           chart: 'mostPopular',
           regionCode: 'US',
-          maxResults: 1, // Fetch only 1 video to limit API calls initially
+          maxResults: 30, // Fetch 30 videos
           key: API_KEY,
         },
       },
     );
 
-    const video = response.data.items[0]; // Get the first video
-    return {
+    return response.data.items.map(video => ({
       id: video.id,
       title: video.snippet.title,
       thumbnail: video.snippet.thumbnails.medium.url, // Use medium-sized thumbnail
-    };
+    }));
   } catch (error) {
-    console.error('Error fetching video ID:', error.message);
-    return null;
+    console.error('Error fetching video IDs:', error.message);
+    return [];
   }
 };
 
-// Function to fetch comments from a specific video
+// Function to fetch up to 50 comments from a specific video
 const fetchCommentsFromVideo = async (videoId, videoName, videoThumbnail) => {
   try {
     const response = await axios.get(
@@ -47,13 +46,13 @@ const fetchCommentsFromVideo = async (videoId, videoName, videoThumbnail) => {
         params: {
           part: 'snippet',
           videoId: videoId,
-          maxResults: 10, // Fetch 10 comments to pick 5 real and 5 for generating fake comments
+          maxResults: 50, // Fetch 50 comments
           key: API_KEY,
         },
       },
     );
 
-    const comments = response.data.items.map(item => ({
+    return response.data.items.map(item => ({
       profilePicture:
         item.snippet.topLevelComment.snippet.authorProfileImageUrl,
       username: item.snippet.topLevelComment.snippet.authorDisplayName.replace(
@@ -67,8 +66,6 @@ const fetchCommentsFromVideo = async (videoId, videoName, videoThumbnail) => {
       videoName: videoName, // Use the actual video name
       video: videoThumbnail, // Use the medium-sized video thumbnail URL
     }));
-
-    return comments;
   } catch (error) {
     console.error(
       `Error fetching comments for video ID ${videoId}:`,
@@ -200,56 +197,69 @@ const generateFakeComment = async realComment => {
   };
 };
 
-// Function to fetch and process comments
+// Main function to fetch and process comments
 const fetchAndProcessComments = async () => {
-  const video = await getTopPopularVideo();
-  if (video) {
+  const videos = await getTopPopularVideos();
+  const realComments = [];
+  const fakeComments = [];
+
+  for (const video of videos) {
     const comments = await fetchCommentsFromVideo(
       video.id,
       video.title,
       video.thumbnail,
     );
 
-    if (comments.length) {
-      // Pick 5 real comments
-      const realComments = comments.slice(0, 5);
+    // Randomly select 10 comments from the fetched comments
+    const selectedComments = comments
+      .sort(() => 0.5 - Math.random())
+      .slice(0, 10);
 
-      // Generate 5 fake comments based on the next 5 real comments
-      const fakeComments = await Promise.all(
-        comments
-          .slice(5, 10)
-          .map(realComment => generateFakeComment(realComment)),
-      );
+    // Pick 5 real comments
+    realComments.push(...selectedComments.slice(0, 5));
 
-      // Save real comments
-      const realCommentsPath = path.resolve(
-        process.cwd(),
-        'src/data/realComments.ts',
-      );
-      const realCommentsContent = `export const realComments = ${JSON.stringify(
-        realComments,
-        null,
-        2,
-      )};`;
-      fs.writeFileSync(realCommentsPath, realCommentsContent, 'utf-8');
+    // Generate 5 fake comments based on the next 5 real comments
+    const generatedFakeComments = await Promise.all(
+      selectedComments
+        .slice(5, 10)
+        .map(realComment => generateFakeComment(realComment)),
+    );
 
-      // Save fake comments
-      const fakeCommentsPath = path.resolve(
-        process.cwd(),
-        'src/data/fakeComments.ts',
-      );
-      const fakeCommentsContent = `export const fakeComments = ${JSON.stringify(
-        fakeComments,
-        null,
-        2,
-      )};`;
-      fs.writeFileSync(fakeCommentsPath, fakeCommentsContent, 'utf-8');
+    fakeComments.push(...generatedFakeComments);
 
-      console.log(
-        'Comments have been saved to src/data/realComments.ts and src/data/fakeComments.ts',
-      );
+    // Break early if we have reached the limit
+    if (realComments.length >= 150 && fakeComments.length >= 150) {
+      break;
     }
   }
+
+  // Save real comments
+  const realCommentsPath = path.resolve(
+    process.cwd(),
+    'src/data/realComments.ts',
+  );
+  const realCommentsContent = `export const realComments = ${JSON.stringify(
+    realComments,
+    null,
+    2,
+  )};`;
+  fs.writeFileSync(realCommentsPath, realCommentsContent, 'utf-8');
+
+  // Save fake comments
+  const fakeCommentsPath = path.resolve(
+    process.cwd(),
+    'src/data/fakeComments.ts',
+  );
+  const fakeCommentsContent = `export const fakeComments = ${JSON.stringify(
+    fakeComments,
+    null,
+    2,
+  )};`;
+  fs.writeFileSync(fakeCommentsPath, fakeCommentsContent, 'utf-8');
+
+  console.log(
+    'Comments have been saved to src/data/realComments.ts and src/data/fakeComments.ts',
+  );
 };
 
 // Start the process
