@@ -50,11 +50,10 @@ const generateFakeCommentText = async (
   const basePrompt = `Based on the video titled "${videoTitle}" and the real comment: "${realComment}", write an original YouTube comment with these rules:
     - Not longer than the real comment
     - Half its length in characters. 2 sentences max
-    - Has casual grammar and very minor typos
-    - ONLY CAPITALIZE THE FIRST LETTER OF THE FIRST WORD IN THE FIRST SENTENCE
+    - Has casual grammar and very minor typos, 
+    - NO MISSING LETTERS IN WORDS
     - DO NOT USE COMMAS OR APOSTRAPHES
     - DO NOT USE PERIODS AT THE END OF COMMENTS
-    - 1 letter missing max per word. 3 letters missing max per comment
     - If negative or bored, keep it very short and limit to 1 sentence
     - Avoid hashtags
     - If using slang, ensure it fits the context
@@ -77,10 +76,15 @@ const generateFakeCommentText = async (
     "Happy-go-lucky. Positive, e.g., 'Made my day!!'",
     "Trendy. Posts for likes, e.g., 'Like if you were born in the wrong generation' or 'Like if your watching this in 2024'",
     "Stolen Jokes. Generic stolen jokes, e.g., 'We gettin out the hood with this one 🔥🔥🔥'",
-    "Long words. Multiple vowels together or letters at the end, e.g., 'whaaaaaat was thatttttttt'",
+    "Long words. Multiple vowels together or letters at the end, 5 words max e.g., 'whaaaaaat was thatttttttt'",
     "Emojis. Just emojis, nothing else e.g., '💃💃💃💃💃💃'",
     "Shipper. Wants the youtuber to be in a relationship e.g., 'Dan should date Gio ngl'",
-    "Request Kid. Asks for new video, no punctuation e.g., 'Can you do five nights at freddys next Foxy is my favorite'",
+    "Request Kid. Asks for new video, no punctuation e.g., 'Pls do five nights at freddys next Foxy is my favorite'",
+    `Quoter. Writes a quote from the video, then a short reaction e.g., '"Oh my god my hair is on fire" 😂🔥'`,
+    "ALL CAPS. POINTS OUT SOMETHING AT A TIMESTAMP e.g., 'SKIBIDI MENTIONED 🗣🗣🗣🗣 8:14'",
+    "Proud. Wants to mention their country and flag e.g., 'Lets go... love from france 🇫🇷🇫🇷❤❤'",
+    "Laugher. ends comments in hahaha e.g., 'Love how the editor does sound effect hahahaha'",
+    'Yapper. talks with good grammar, make the comment twice as long as the real comment',
   ];
 
   const selectedPersona = personas[Math.floor(Math.random() * personas.length)];
@@ -110,7 +114,21 @@ const generateFakeCommentText = async (
       },
     );
 
-    const commentText = response.data.choices[0].message.content.trim();
+    let commentText = response.data.choices[0].message.content.trim();
+
+    // 90% of the time, capitalize the first letter of the comment text string
+    if (Math.random() < 0.9)
+      commentText = commentText.charAt(0).toUpperCase() + commentText.slice(1);
+    else
+      commentText = commentText.charAt(0).toLowerCase() + commentText.slice(1);
+
+    // 10% of the time, remove one random character from the comment text string
+    if (Math.random() < 0.1) {
+      const randomIndex = Math.floor(Math.random() * commentText.length);
+      commentText =
+        commentText.slice(0, randomIndex) + commentText.slice(randomIndex + 1);
+    }
+
     return commentText;
   } catch (error) {
     if (error instanceof Error) {
