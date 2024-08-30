@@ -119,8 +119,11 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   const makeGuess = (guess: boolean) => {
     if (gameOver) {
       setGameOver(false);
+      setStarted(false);
       Events.emit('reset');
       setRound([]);
+      addDialogue();
+      return;
     }
 
     if (!started) {
