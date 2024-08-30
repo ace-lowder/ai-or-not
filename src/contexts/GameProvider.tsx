@@ -139,6 +139,7 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
       setLives(prevLives => prevLives - 1);
 
       if (lives - 1 <= 0) {
+        Events.emit('gameOver');
         setGameOver(true);
         addDialogue();
         addGameOver();
