@@ -76,6 +76,9 @@ const generateFakeCommentText = async (
     "Persona: Stressed. Overwhelmed, e.g., 'cant deal rn'.",
     "Persona: Trendy. Posts for likes, e.g., 'Like if born in the wrong generation'.",
     "Persona: Stolen Jokes. Generic stolen jokes, e.g., 'we gettin out the classroom with this one 🔥'.",
+    "Persona: Long words. Multiple vowels together or letters at the end, e.g., 'whaaaaaat was thatttttttt'.",
+    "Persona: Emojis. Just emojis, nothing else e.g., '💃💃💃💃'.",
+    "Persona: Single word. Just one word, e.g., 'lame'.",
   ];
 
   const selectedPersona = personas[Math.floor(Math.random() * personas.length)];

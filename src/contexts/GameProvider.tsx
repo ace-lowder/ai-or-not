@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { useComment } from './CommentProvider';
+import { useScore } from './ScoreProvider';
 import { Events } from './Events';
 import Dialogue from '../components/Dialogue';
 import CommentCard from '../components/CommentCard';
@@ -12,6 +13,7 @@ interface GameContextType {
   started: boolean;
   disabled: boolean;
   idle: boolean;
+  lives: number;
   gameOver: boolean;
   round: { id: number; element: JSX.Element }[];
   makeGuess: (guess: boolean) => void;
@@ -23,10 +25,12 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const { fetchedComment, fetchComment } = useComment();
+  const { score } = useScore();
 
   const [started, setStarted] = useState(false);
   const [disabled, setDisabled] = useState(false);
   const [idle, setIdle] = useState(true);
+  const [lives, setLives] = useState(3);
   const [gameOver, setGameOver] = useState(false);
   const [round, setRound] = useState<{ id: number; element: JSX.Element }[]>(
     [],
@@ -44,7 +48,29 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   const addLogo = () => {
     setRound(prevElements => [
       ...prevElements,
-      { id: -1, element: <img className="w-full h-auto" src={logo} /> },
+      {
+        id: Math.random(),
+        element: <img className="w-full h-auto" src={logo} />,
+      },
+    ]);
+  };
+
+  const addGameOver = () => {
+    setRound(prevElements => [
+      ...prevElements,
+      {
+        id: Math.random(),
+        element: (
+          <div className="flex flex-col gap-2 w-full items-center justify-center">
+            <h1 className="w-full text-center text-4xl text-white font-bold">
+              Game Over
+            </h1>
+            <p className="w-full text-center text-xl text-white font-semibold">
+              Final Score: {score}
+            </p>
+          </div>
+        ),
+      },
     ]);
   };
 
@@ -104,7 +130,14 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     } else {
       Events.emit('incorrect');
       playSound(incorrectSound, 0.07);
-      setGameOver(true);
+      setLives(prevLives => prevLives - 1);
+      if (lives - 1 <= 0) {
+        setGameOver(true);
+        addDialogue();
+        addGameOver();
+        return;
+      }
+
       addDialogue();
     }
 
@@ -121,7 +154,9 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
       setGameOver(false);
       setStarted(false);
       Events.emit('reset');
+      setLives(3);
       setRound([]);
+      addLogo();
       addDialogue();
       return;
     }
@@ -143,7 +178,7 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <GameContext.Provider
-      value={{ started, disabled, idle, gameOver, round, makeGuess }}
+      value={{ started, disabled, idle, lives, gameOver, round, makeGuess }}
     >
       {children}
     </GameContext.Provider>

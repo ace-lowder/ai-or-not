@@ -140,7 +140,7 @@ const CommentProvider: React.FC<{ children: React.ReactNode }> = ({
         comment = realComments[Math.floor(Math.random() * realComments.length)];
       }
 
-      comment.comment = decodeHtmlEntities(comment.comment);
+      comment.comment = decodeHtmlEntities(comment.comment).replace(/\n/g, ' ');
     } else {
       if (aiCache.length > 0) {
         console.log('[Fake]');
@@ -153,6 +153,7 @@ const CommentProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     }
 
+    console.log(comment.comment);
     setFetchedComment(comment);
   };
 
