@@ -1,10 +1,11 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { realComments } from '../data/realComments'; // Importing hard-coded real comments
-import profileTest from '../assets/profile-test.png'; // Default profile picture
+import { realComments } from '../data/realComments';
+import { fakeComments } from '../data/fakeComments';
 import {
   decodeHtmlEntities,
   getYoutubeComments,
-} from '../services/youtubeService'; // Importing helper function
+} from '../services/youtubeService';
+import { getGeneratedComments } from '../services/openaiService';
 
 // prettier-ignore
 export interface Comment {
@@ -35,7 +36,8 @@ const CommentProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const didMount = useRef(false);
-  const isFetching = useRef(true);
+  const isFetchingYoutube = useRef(true);
+  const isFetchingAi = useRef(true);
 
   // Check local storage on mount
   useEffect(() => {
@@ -48,7 +50,7 @@ const CommentProvider: React.FC<{ children: React.ReactNode }> = ({
       getYoutubeComments().then(comments => {
         setYoutubeCache(prevCache => {
           const updatedCache = [...prevCache, ...comments];
-          localStorage.setItem('youtubeCache', JSON.stringify(updatedCache)); // Update local storage
+          localStorage.setItem('youtubeCache', JSON.stringify(updatedCache));
           return updatedCache;
         });
       });
@@ -57,16 +59,22 @@ const CommentProvider: React.FC<{ children: React.ReactNode }> = ({
     if (storedAiCache) {
       setAiCache(JSON.parse(storedAiCache));
     } else {
-      localStorage.setItem('aiCache', JSON.stringify(aiCache));
+      getGeneratedComments().then(comments => {
+        setAiCache(prevCache => {
+          const updatedCache = [...prevCache, ...comments];
+          localStorage.setItem('aiCache', JSON.stringify(updatedCache));
+          return updatedCache;
+        });
+      });
     }
 
     setTimeout(() => {
       didMount.current = true;
-      isFetching.current = false;
+      isFetchingYoutube.current = false;
+      isFetchingAi.current = false;
     }, 2000);
   }, []);
 
-  // Update local storage whenever youtubeCache or aiCache changes
   useEffect(() => {
     if (didMount.current) {
       localStorage.setItem('youtubeCache', JSON.stringify(youtubeCache));
@@ -75,60 +83,73 @@ const CommentProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [youtubeCache, aiCache]);
 
   useEffect(() => {
-    // Avoid fetching if youtubeCache is sufficient
-    if (youtubeCache.length > 5 || isFetching.current) {
+    if (youtubeCache.length > 5 || isFetchingYoutube.current) {
       return;
     }
 
-    // Set fetching flag before starting to fetch
-    isFetching.current = true;
+    isFetchingYoutube.current = true;
 
-    // Fetch comments
     getYoutubeComments().then(comments => {
       setYoutubeCache(prevCache => {
-        // If the previous cache is still sufficient, no need to add more comments
         if (prevCache.length > 5) {
-          isFetching.current = false;
+          isFetchingYoutube.current = false;
           return prevCache;
         }
 
         const updatedCache = [...prevCache, ...comments];
-        localStorage.setItem('youtubeCache', JSON.stringify(updatedCache)); // Update local storage
-        isFetching.current = false;
+        localStorage.setItem('youtubeCache', JSON.stringify(updatedCache));
+        isFetchingYoutube.current = false;
         return updatedCache;
       });
     });
-  }, [youtubeCache]); // Watching youtubeCache for changes
+  }, [youtubeCache]);
+
+  useEffect(() => {
+    if (aiCache.length > 5 || isFetchingYoutube.current) {
+      return;
+    }
+
+    isFetchingAi.current = true;
+
+    getGeneratedComments().then(comments => {
+      setAiCache(prevCache => {
+        if (prevCache.length > 5) {
+          isFetchingYoutube.current = false;
+          return prevCache;
+        }
+
+        const updatedCache = [...prevCache, ...comments];
+        localStorage.setItem('aiCache', JSON.stringify(updatedCache));
+        isFetchingYoutube.current = false;
+        return updatedCache;
+      });
+    });
+  }, [aiCache]);
 
   const fetchComment = async () => {
     let comment: Comment;
 
     if (Math.random() > 0.5) {
       if (youtubeCache.length > 0) {
+        console.log('[Real]');
         comment = youtubeCache.shift()!;
-        setYoutubeCache([...youtubeCache]); // Update the state with shifted cache
-        localStorage.setItem('youtubeCache', JSON.stringify(youtubeCache)); // Update local storage
+        setYoutubeCache([...youtubeCache]);
+        localStorage.setItem('youtubeCache', JSON.stringify(youtubeCache));
       } else {
+        console.log('[Real Hardcoded]');
         comment = realComments[Math.floor(Math.random() * realComments.length)];
       }
 
       comment.comment = decodeHtmlEntities(comment.comment);
     } else {
       if (aiCache.length > 0) {
+        console.log('[Fake]');
         comment = aiCache.shift()!;
-        setAiCache([...aiCache]); // Update the state with shifted cache
-        localStorage.setItem('aiCache', JSON.stringify(aiCache)); // Update local storage
+        setAiCache([...aiCache]);
+        localStorage.setItem('aiCache', JSON.stringify(aiCache));
       } else {
-        comment = {
-          profilePicture: profileTest,
-          username: 'AI ChatBot',
-          comment: 'This is an AI test comment.',
-          likes: 10,
-          date: '2024-08-23',
-          isReal: false,
-          videoName: undefined,
-          video: undefined,
-        };
+        console.log('[Fake Hardcoded]');
+        comment = fakeComments[Math.floor(Math.random() * fakeComments.length)];
       }
     }
 

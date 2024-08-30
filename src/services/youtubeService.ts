@@ -2,7 +2,7 @@ import axios from 'axios';
 import { Comment } from '../contexts/CommentProvider';
 
 // Use Vite's `import.meta.env` to access environment variables
-const API_KEY = import.meta.env.VITE_YOUTUBE_API; // Assume you renamed your env var to VITE_YOUTUBE_API
+const API_KEY = import.meta.env.VITE_YOUTUBE_API;
 
 // TypeScript type for YouTube API video items
 interface VideoItem {

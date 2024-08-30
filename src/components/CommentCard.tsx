@@ -37,7 +37,6 @@ const CommentCard: React.FC<CommentCardProps> = ({ comment }) => {
   }, []);
 
   useEffect(() => {
-    // Validate the profile picture whenever the component mounts or the profile picture changes
     validateProfilePicture(comment.profilePicture, comment.username).then(
       validatedUrl => {
         setValidatedProfilePicture(validatedUrl);
@@ -65,7 +64,7 @@ const CommentCard: React.FC<CommentCardProps> = ({ comment }) => {
         {comment.date} • {comment.likes} likes
       </div>
 
-      {!hidden && comment.video && (
+      {!hidden && comment.video && comment.isReal && (
         <div className="flex gap-2 mt-2 items-center">
           <img
             src={comment.video}
