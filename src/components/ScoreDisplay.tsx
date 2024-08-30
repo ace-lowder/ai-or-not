@@ -6,7 +6,7 @@ import switchSound from '../assets/switch.mp3';
 const ScoreDisplay: React.FC = () => {
   const { score, hiscore } = useScore();
   const [fadeColor, setFadeColor] = useState<string | undefined>(undefined);
-  const [isHovered, setIsHovered] = useState(false); // State to track hover
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const handleCorrect = () => {
@@ -44,13 +44,12 @@ const ScoreDisplay: React.FC = () => {
           : 'text-white transition-all duration-300 text-2xl'
       }`}
       onMouseEnter={() => {
-        playSound(switchSound, 0.02);
+        playSound(switchSound, 0.04);
         setIsHovered(true);
       }}
       onMouseLeave={() => setIsHovered(false)}
     >
       {score}
-      {/* High score box, shown on hover */}
       {isHovered && (
         <div className="absolute top-16 text-sm">Best: {hiscore || 0}</div>
       )}

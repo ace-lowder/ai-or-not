@@ -64,7 +64,7 @@ const generateFakeCommentText = async (
     "Persona: Sarcastic. Short, dry, e.g., 'yeah sure'.",
     "Persona: Angry. Frustrated, short, e.g., 'u stupid like why the hell idiot'.",
     "Persona: Incoherent. Broken English, typos, e.g., 'very good me like'.",
-    "Persona: Nostalgic. References past briefly, e.g., 'born in the wrong year'.",
+    "Persona: Nostalgic. References past briefly, e.g., 'I miss the old youtube'.",
     "Persona: Enthusiastic fan. Excited, use emojis, e.g., 'wow 😂😂!! '.",
     "Persona: Casual viewer. Polite, short, e.g., 'good vid'.",
     "Persona: Ranter. Off-topic rant, short, e.g., 'honestly should be put in jail'.",

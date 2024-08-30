@@ -131,29 +131,27 @@ const CommentProvider: React.FC<{ children: React.ReactNode }> = ({
 
     if (Math.random() > 0.4) {
       if (youtubeCache.length > 0) {
-        console.log('[Real]');
         comment = youtubeCache.shift()!;
         setYoutubeCache([...youtubeCache]);
         localStorage.setItem('youtubeCache', JSON.stringify(youtubeCache));
       } else {
-        console.log('[Real Hardcoded]');
         comment = realComments[Math.floor(Math.random() * realComments.length)];
       }
 
-      comment.comment = decodeHtmlEntities(comment.comment).replace(/\n/g, ' ');
+      comment.comment = decodeHtmlEntities(comment.comment).replace(
+        /<br>/g,
+        ' ',
+      );
     } else {
       if (aiCache.length > 0) {
-        console.log('[Fake]');
         comment = aiCache.shift()!;
         setAiCache([...aiCache]);
         localStorage.setItem('aiCache', JSON.stringify(aiCache));
       } else {
-        console.log('[Fake Hardcoded]');
         comment = fakeComments[Math.floor(Math.random() * fakeComments.length)];
       }
     }
 
-    console.log(comment.comment);
     setFetchedComment(comment);
   };
 

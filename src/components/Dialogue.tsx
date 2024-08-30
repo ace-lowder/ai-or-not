@@ -214,7 +214,7 @@ const Dialogue: React.FC<DialogueProps> = ({ children }) => {
     const timeout = setTimeout(() => {
       const interval = setInterval(() => {
         if (currentIndex.current < words.length) {
-          playSound(beepSound, 0.05);
+          playSound(beepSound, 0.03);
           const nextWord = words[currentIndex.current];
           setVisibleWords(prevWords => [...prevWords, nextWord]);
           currentIndex.current += 1;

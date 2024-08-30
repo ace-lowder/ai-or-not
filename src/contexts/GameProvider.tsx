@@ -47,6 +47,10 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     didMount.current = true;
     addLogo();
     addDialogue();
+
+    console.log(
+      'This web app was made by Ace Lowder\n\nConnect with me on LinkedIn!\nhttps://www.linkedin.com/in/ace-lowder/\n\n########## Thanks for playing ##########',
+    );
   }, []);
 
   const addLogo = () => {
