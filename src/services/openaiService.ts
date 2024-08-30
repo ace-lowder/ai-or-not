@@ -5,8 +5,6 @@ import { getYoutubeComments } from './youtubeService';
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
 const generateFakeUsername = async (realUsername: string): Promise<string> => {
-  console.log('Generating fake username for:', realUsername);
-
   const prompt = `Generate a YouTube username similar in length, tone, and style to the following username: "${realUsername}". Make the username original but keep it convincing as if it belongs to a real person. In your response, say the username only. No quotes around the username, no special characters.`;
 
   try {
@@ -34,7 +32,6 @@ const generateFakeUsername = async (realUsername: string): Promise<string> => {
     );
 
     const username = response.data.choices[0].message.content.trim();
-    console.log('Generated fake username:', username);
     return username;
   } catch (error) {
     if (error instanceof Error) {
@@ -50,13 +47,6 @@ const generateFakeCommentText = async (
   realComment: string,
   videoTitle: string,
 ): Promise<string> => {
-  console.log(
-    'Generating fake comment for:',
-    realComment,
-    'from video:',
-    videoTitle,
-  );
-
   const basePrompt = `Based on the video titled "${videoTitle}" and the real comment: "${realComment}", write an original YouTube comment that:
     - Is not longer than the original comment.
     - Aim for half its length in characters. 2 sentences max.
@@ -116,7 +106,6 @@ const generateFakeCommentText = async (
     );
 
     const commentText = response.data.choices[0].message.content.trim();
-    console.log('Generated fake comment:', commentText);
     return commentText;
   } catch (error) {
     if (error instanceof Error) {
@@ -129,19 +118,10 @@ const generateFakeCommentText = async (
 };
 
 const generateFakeComment = async (realComment: Comment): Promise<Comment> => {
-  console.log('Generating fake comment for real comment:', realComment);
-
   const fakeUsername = await generateFakeUsername(realComment.username);
   const fakeCommentText = await generateFakeCommentText(
     realComment.comment,
     realComment.videoName || '',
-  );
-
-  console.log(
-    'Generated fake username:',
-    fakeUsername,
-    'and fake comment:',
-    fakeCommentText,
   );
 
   return {
@@ -169,6 +149,5 @@ export const getGeneratedComments = async (): Promise<Comment[]> => {
     }
   }
 
-  console.log('***Generated fake comments');
   return generatedComments;
 };

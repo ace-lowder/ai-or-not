@@ -159,7 +159,9 @@ export const getYoutubeComments = async (): Promise<Comment[]> => {
 
   for (const video of selectedVideos) {
     const comment = await fetchCommentFromVideo(video.id, video.snippet.title);
-    if (comment) {
+
+    // Check if the comment exists and its length is 240 characters or less
+    if (comment && comment.comment.length <= 240) {
       comments.push(comment);
     }
 
