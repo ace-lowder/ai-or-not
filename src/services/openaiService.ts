@@ -47,38 +47,38 @@ const generateFakeCommentText = async (
   realComment: string,
   videoTitle: string,
 ): Promise<string> => {
-  const basePrompt = `Based on the video titled "${videoTitle}" and the real comment: "${realComment}", write an original YouTube comment that:
-    - Is not longer than the original comment.
-    - Aim for half its length in characters. 2 sentences max.
-    - Uses casual grammar, mostly lowercase, and very minor typos.
-    - DO NOT USE COMMAS OR APOSTRAPHES. NO PERIODS AT THE END OF COMMENTS
-    - 1 letter missing max per word. 3 letters missing max per comment.
-    - If negative or bored, keep it very short and limit to 1 sentence.
-    - Avoid hashtags. If using slang, ensure it fits the context.
-    - No 'um' or 'uh'. If you have more than one sentence and the last sentence is short, remove it.`;
+  const basePrompt = `Based on the video titled "${videoTitle}" and the real comment: "${realComment}", write an original YouTube comment with these rules:
+    - Not longer than the real comment
+    - Half its length in characters. 2 sentences max
+    - Has casual grammar and very minor typos
+    - Mostly lowercase (Only capitalize the first letter of the first word)
+    - DO NOT USE COMMAS OR APOSTRAPHES
+    - DO NOT USE PERIODS AT THE END OF COMMENTS
+    - 1 letter missing max per word. 3 letters missing max per comment
+    - If negative or bored, keep it very short and limit to 1 sentence
+    - Avoid hashtags
+    - If using slang, ensure it fits the context
+    - No 'um' or 'uh'.
+    - If you have more than one sentence and the last sentence is short, remove it
+    - Follow these rules exactly, unless the persona you get says otherwise
+    
+    Here is your Persona: `;
 
   const personas = [
-    "Persona: Confused child. Simple words, bad grammar, no caps, some typos, e.g., 'i dnt get it why'.",
-    "Persona: Child using slang. Emotional, bad grammar, lowercase, e.g., 'dat was lit frfr'.",
-    "Persona: Troll. Short, mocking, e.g., 'ur video is a joke'.",
-    "Persona: Sarcastic. Short, dry, e.g., 'yeah sure'.",
-    "Persona: Angry. Frustrated, short, e.g., 'u stupid like why the hell idiot'.",
-    "Persona: Incoherent. Broken English, typos, e.g., 'very good me like'.",
-    "Persona: Nostalgic. References past briefly, e.g., 'I miss the old youtube'.",
-    "Persona: Enthusiastic fan. Excited, use emojis, e.g., 'wow 😂😂!! '.",
-    "Persona: Casual viewer. Polite, short, e.g., 'good vid'.",
-    "Persona: Ranter. Off-topic rant, short, e.g., 'honestly should be put in jail'.",
-    "Persona: Critical. Focus on flaws, short, e.g., 'why so bad editing @1:03'.",
-    "Persona: Fan critic. Positive then critical, e.g., 'love u but this aint it'.",
-    "Persona: Shy. Hesitant, e.g., 'ok'.",
-    "Persona: Pessimist. Negative, e.g., 'nothing changes'.",
-    "Persona: Happy-go-lucky. Positive, e.g., 'Made my day!!'.",
-    "Persona: Stressed. Overwhelmed, e.g., 'cant deal rn'.",
-    "Persona: Trendy. Posts for likes, e.g., 'Like if born in the wrong generation'.",
-    "Persona: Stolen Jokes. Generic stolen jokes, e.g., 'we gettin out the classroom with this one 🔥'.",
-    "Persona: Long words. Multiple vowels together or letters at the end, e.g., 'whaaaaaat was thatttttttt'.",
-    "Persona: Emojis. Just emojis, nothing else e.g., '💃💃💃💃'.",
-    "Persona: Single word. Just one word, e.g., 'lame'.",
+    "Confused child. Simple words, bad grammar, no caps, some typos, e.g., 'i dnt get it why'",
+    "Child using slang. Emotional, bad grammar, e.g., 'Dat was lit frfr. stop cappin'",
+    "Troll. Short, mocking, e.g., 'Ur video is bad'",
+    "Angry. Frustrated, short, e.g., 'u stupid like why the hell idiot'",
+    "Incoherent. Broken English, typos, e.g., 'Very good me like'",
+    "Enthusiastic fan. Excited, use emojis, include timestamp, e.g., 'Wow 7:24 😂😂!! '",
+    "Casual viewer. Polite, short, e.g., 'Good vid'",
+    "Ranter. Off-topic rant, short, e.g., 'Honestly should be put in jail'",
+    "Fan critic. Positive then critical, e.g., 'Love u but this aint it'",
+    "Happy-go-lucky. Positive, e.g., 'Made my day!!'",
+    "Trendy. Posts for likes, e.g., 'Like if you were born in the wrong generation' or 'Like if your watching this in 2024'",
+    "Stolen Jokes. Generic stolen jokes, e.g., 'We gettin out the hood with this one 🔥🔥🔥'",
+    "Long words. Multiple vowels together or letters at the end, e.g., 'whaaaaaat was thatttttttt'",
+    "Emojis. Just emojis, nothing else e.g., '💃💃💃💃💃💃'",
   ];
 
   const selectedPersona = personas[Math.floor(Math.random() * personas.length)];
