@@ -52,12 +52,12 @@ const CommentCard: React.FC<CommentCardProps> = ({ comment }) => {
           alt="Profile"
           className="w-8 h-8 rounded-full mr-2"
         />
-        <div className="font-semibold">
+        <div className="font-semibold md:text-lg">
           {!hidden && !comment.isReal ? 'Chat GPT' : comment.username}
         </div>
       </div>
       <div
-        className="text-sm"
+        className="text-sm md:text-base"
         dangerouslySetInnerHTML={{ __html: comment.comment || '' }}
       />
       <div className="text-xs text-gray-500">
