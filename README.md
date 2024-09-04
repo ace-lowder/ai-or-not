@@ -14,16 +14,18 @@
 
 ## Overview
 
-<p>AI or Not (https://aiornot.site) is an online game where you have to guess whether YouTube comments are real or AI-generated. This game was inspired by the Dead Internet Theory, which argues that most of the internet is filled with bots instead of real humans. I wanted to see if the average person could tell the difference between an AI comment and a real comment.</p>
+<p>AI or Not (https://aiornot.site) is an online game where you have to guess whether YouTube comments are real or AI-generated. This game was inspired by the Dead Internet Theory, which argues that most of the internet is filled with bots instead of real people. I wanted to see if the average person could tell the difference between an AI comment and a real comment.</p>
 
 <p>When you start the game, you'll be presented with a series of YouTube comments and will have to guess whether each comment is AI or not. The goal is to score as high as possible by making the correct guesses, all while a snarky robot host eggs you on.</p>
 
-<br><br><a href="https://aiornot.site/"><img src="/readme/example.png" width="1280" alt="Gameplay Example"></a>
+<br><div align="center"><a href="https://aiornot.site/" ><img src="/readme/play.png" width="420" alt="Project Banner"></a></div>
+
+<br><br><br><a href="https://aiornot.site/"><img src="/readme/example.png" width="1280" alt="Gameplay Example"></a>
 
 ## How it Works
 
-<p>When you first load up the site, the web app will immediately start fetching 10 top comments from the most popular US videos on YouTube today. It will also start generating comments using OpenAI's GPT-3 model. If the user starts the game before the API fetching is complete, it will randomly select comments from hardcoded data that I previously fetched and turned into JSON. The web app caches 20 comments at a time (10 real and 10 generated) and will asynchronously fetch more comments in the background when it notices the cache running low. This ensures the cache never runs out of comments, and the user has a seamless gaming experience with no loading times.</p>
+<p>When you first load up the site, the web app will immediately start fetching 10 comments from the most popular YouTube videos posted recently in the US. It will also start generating comments using Open AI's GPT-3 model. If the user starts the game before the API fetching is complete, it will randomly select comments from hardcoded data that I previously fetched and turned into JSON. The web app caches 20 comments at a time (10 real and 10 generated) in local storage, and will asynchronously fetch more comments in the background when it notices that the cache is running low. This ensures the cache never runs out of comments, and the user has a seamless gaming experience with no loading times.</p>
 
-<p>The AI-generated comments are created using real comments and a video title as reference, so it can create very convincing fake comments that comment on events that happen (or it predicts happens) in the video. The AI also has around 20 personas that it uses to generate convincing comments. These personas range from the kid who repeatedly asks the YouTuber to do something in their next video, to someone that only uses emojis and no words.</p>
+<p>The AI-generated comments are created using real comments and a video title as reference. This allows open AI to create very convincing fake comments that reference events in the video (or what it predicts happens in the video). The AI also has around 20 personas that it uses to generate convincing comments. These personas range from a kid who repeatedly asks the YouTuber to do something in their next video, to someone that only uses emojis and no words.</p>
 
 <br><br><a href="https://aiornot.site/"><img src="/readme/footer.png" width="1280" alt="Footer Image"></a>
