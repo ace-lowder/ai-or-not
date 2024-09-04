@@ -14,7 +14,7 @@
 
 ## Overview
 
-<p>AI or Not ([https://aiornot.site](https://aiornot.site)) is an online game where you have to guess whether YouTube comments are real or AI-generated. This game was inspired by the Dead Internet Theory, which argues that most of the internet is filled with bots instead of real humans. I wanted to see if the average person could tell the difference between an AI comment and a real comment.</p>
+<p>AI or Not (https://aiornot.site) is an online game where you have to guess whether YouTube comments are real or AI-generated. This game was inspired by the Dead Internet Theory, which argues that most of the internet is filled with bots instead of real humans. I wanted to see if the average person could tell the difference between an AI comment and a real comment.</p>
 
 <p>When you start the game, you'll be presented with a series of YouTube comments and will have to guess whether each comment is AI or not. The goal is to score as high as possible by making the correct guesses, all while a snarky robot host eggs you on.</p>
 
