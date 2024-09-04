@@ -2,7 +2,7 @@
   AI or Not
 </h1>
 
-<a href="https://aiornot.site/"><img src="/readme/header.png" width="1280" height="260" alt="Project Banner"></a>
+<a href="https://aiornot.site/"><img src="/readme/header.png" width="1280" alt="Project Banner"></a>
 
 <div align="center">
   <a href="https://react.dev/"><img src="/readme/icons/react.png" width="48" height="48" alt="React"></a>&nbsp;
@@ -18,7 +18,7 @@
 
 <p>When you start the game, you'll be presented with a series of YouTube comments and will have to guess whether each comment is AI or not. The goal is to score as high as possible by making the correct guesses, all while a snarky robot host eggs you on.</p>
 
-<br><br><a href="https://aiornot.site/"><img src="/readme/example.png" width="1280" height="260" alt="Gameplay Example"></a>
+<br><br><a href="https://aiornot.site/"><img src="/readme/example.png" width="1280" alt="Gameplay Example"></a>
 
 ## How it Works
 
@@ -26,4 +26,4 @@
 
 <p>The AI-generated comments are created using real comments and a video title as reference, so it can create very convincing fake comments that comment on events that happen (or it predicts happens) in the video. The AI also has around 20 personas that it uses to generate convincing comments. These personas range from the kid who repeatedly asks the YouTuber to do something in their next video, to someone that only uses emojis and no words.</p>
 
-<br><br><a href="https://aiornot.site/"><img src="/readme/footer.png" width="1280" height="120" alt="Footer Image"></a>
+<br><br><a href="https://aiornot.site/"><img src="/readme/footer.png" width="1280" alt="Footer Image"></a>
