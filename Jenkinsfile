@@ -20,10 +20,10 @@ pipeline {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-access-key']]) {
                     script {
-                        // Log a safe portion of the credentials
+                        // Echo the access key and secret key for debugging
                         sh '''
-                        echo "AWS_ACCESS_KEY_ID is ${AWS_ACCESS_KEY_ID:0:4}************"
-                        echo "AWS_SECRET_ACCESS_KEY is ${AWS_SECRET_ACCESS_KEY:0:4}************"
+                        echo "AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}"
+                        echo "AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}"
                         '''
                         // Log in to ECR
                         sh '''
