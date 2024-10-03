@@ -8,12 +8,6 @@ pipeline {
     }
 
     stages {
-        stage('Clone Repository') {
-            steps {
-                git 'https://github.com/ace-lowder/ai-or-not.git'  // Clone your repo
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
                 script {
