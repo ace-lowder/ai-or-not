@@ -20,8 +20,15 @@ pipeline {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-access-key']]) {
                     script {
+                        // Log a safe portion of the credentials
+                        sh '''
+                        echo "AWS_ACCESS_KEY_ID is ${AWS_ACCESS_KEY_ID:0:4}************"
+                        echo "AWS_SECRET_ACCESS_KEY is ${AWS_SECRET_ACCESS_KEY:0:4}************"
+                        '''
                         // Log in to ECR
                         sh '''
+                        aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}
+                        aws configure set aws_secret_access_key ${AWS_SECRET_ACCESS_KEY}
                         aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO
                         '''
                         // Push the Docker image to ECR
@@ -35,13 +42,11 @@ pipeline {
 
         stage('Deploy to ECS') {
             steps {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-access-key']]) {
-                    script {
-                        // Use AWS CLI to update ECS task definition and deploy
-                        sh '''
-                        aws ecs update-service --cluster ai-or-not-cluster --service ai-or-not-service --force-new-deployment --region $AWS_REGION
-                        '''
-                    }
+                script {
+                    // Use AWS CLI to update ECS task definition and deploy
+                    sh '''
+                    aws ecs update-service --cluster ai-or-not-cluster --service ai-or-not-service --force-new-deployment --region $AWS_REGION
+                    '''
                 }
             }
         }
