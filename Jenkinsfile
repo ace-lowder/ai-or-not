@@ -20,21 +20,16 @@ pipeline {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-access-key']]) {
                     script {
-                        // Echo the access key and secret key for debugging
-                        sh '''
-                        echo "AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}"
-                        echo "AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}"
-                        '''
                         // Log in to ECR
                         sh '''
                         aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}
                         aws configure set aws_secret_access_key ${AWS_SECRET_ACCESS_KEY}
                         aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO
                         '''
-                        // Push the Docker image to ECR
-                        docker.withRegistry("https://${ECR_REPO}", 'aws-access-key') {
-                            docker.image(DOCKER_IMAGE).push()
-                        }
+                        // Push the Docker image to ECR using docker push directly
+                        sh '''
+                        docker push ${DOCKER_IMAGE}
+                        '''
                     }
                 }
             }
