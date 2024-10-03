@@ -29,7 +29,7 @@ pipeline {
                     aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO
                     '''
                     // Push the Docker image to ECR
-                    docker.withRegistry("https://${ECR_REPO}", 'aws-credentials') {
+                    docker.withRegistry("https://${ECR_REPO}", 'aws-access-key') {
                         docker.image(DOCKER_IMAGE).push()
                     }
                 }
