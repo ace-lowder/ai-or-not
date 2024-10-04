@@ -12,6 +12,9 @@ pipeline {
             steps {
                 script {
                     docker.build(DOCKER_IMAGE)  // Build Docker image
+                    sh '''
+                    docker run --rm ${DOCKER_IMAGE} sh -c "npm audit fix"
+                    '''
                 }
             }
         }
@@ -53,3 +56,5 @@ pipeline {
         }
     }
 }
+
+// docker run -d -p 8080:8080 -p 50000:50000   -v /var/jenkins_home:/var/jenkins_home   -v /var/run/docker.sock:/var/run/docker.sock   --user root   jenkins/jenkins:lts
