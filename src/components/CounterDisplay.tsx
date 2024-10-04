@@ -1,8 +1,21 @@
-import { useSelector } from 'react-redux';
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store/store';
+import { increment } from '../store/slices/counterSlice';
 
 const CounterDisplay = () => {
-  const counter = useSelector((state: RootState) => state.counter.value); // Access Redux state
+  const dispatch = useDispatch();
+  const counter = useSelector((state: RootState) => state.counter.value);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      dispatch(increment());
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [dispatch]);
 
   return (
     <div
