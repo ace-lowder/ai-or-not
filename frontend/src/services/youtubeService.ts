@@ -78,8 +78,7 @@ export const getTopPopularVideos = async (): Promise<VideoItem[]> => {
     localStorage.setItem(cacheDateKey, today);
 
     return videoItems;
-  } catch (error) {
-    // console.error('Error fetching top popular video items:', error);
+  } catch {
     return [];
   }
 };
@@ -128,8 +127,7 @@ export const fetchCommentFromVideo = async (
     };
 
     return comment;
-  } catch (error) {
-    // console.error(`Error fetching comment for video ID ${videoId}:`, error);
+  } catch {
     return null;
   }
 };
