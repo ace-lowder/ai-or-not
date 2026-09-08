@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FaArrowRight, FaPlay, FaRobot, FaSync } from "react-icons/fa";
 import { IoPerson } from "react-icons/io5";
-import { fakeComments } from "./data/fake-comments";
-import { realComments } from "./data/real-comments";
 
 const introLines = ["Ready to guess if these YouTube comments are AI or not? Don't mess it up!", "Think you're smarter than a bot? Are these YouTube comments real?", "Let's see if you can outsmart the machine."];
 const correctRealLines = ["Lucky guess! Yes, that one was real.", "Good guess, human! Real comment spotted.", "Humans do say silly things, don't they?"];
@@ -24,11 +22,20 @@ export default function Game() {
   const [flash, setFlash] = useState<"correct" | "incorrect" | null>(null);
   const [scoreHighlight, setScoreHighlight] = useState<"correct" | "reset" | null>(null);
   const [particles, setParticles] = useState<Particle[]>([]);
+  const [commentCache, setCommentCache] = useState<CommentCache>(readCommentCache);
+  const [isLoadingComment, setIsLoadingComment] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const commentCacheRef = useRef(commentCache);
+  const pendingCacheRefills = useRef(new Set<CommentSource>());
 
   useEffect(() => {
     if (started) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [round, started]);
+
+  useEffect(() => {
+    localStorage.setItem("ai-or-not-comment-cache", JSON.stringify(commentCache));
+  }, [commentCache]);
 
   const play = useCallback((file: string, volume: number) => {
     const sound = new Audio(`/game/${file}`);
@@ -53,15 +60,71 @@ export default function Game() {
     play("woosh.mp3", 0.05);
   }, [play]);
 
-  const addComment = useCallback(() => {
-    setRound((items) => [...items, { id: crypto.randomUUID(), kind: "comment", comment: pickComment(), revealed: false }]);
-    setWaiting(false);
-    play("woosh.mp3", 0.05);
-  }, [play]);
+  const replaceCommentCache = useCallback((nextCache: CommentCache) => {
+    commentCacheRef.current = nextCache;
+    setCommentCache(nextCache);
+  }, []);
+
+  const fetchComments = useCallback(async (source: CommentSource, count: number) => {
+    const response = await fetch("/api/round", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ source, count }),
+    });
+    const payload = await response.json() as { comments?: Comment[]; error?: string };
+    if (!response.ok || !payload.comments?.length) throw new Error(payload.error ?? "Couldn't load live comments. Try again.");
+    return payload.comments;
+  }, []);
+
+  const refillCommentCache = useCallback(async (source: CommentSource, count: number) => {
+    if (pendingCacheRefills.current.has(source)) return;
+
+    pendingCacheRefills.current.add(source);
+    try {
+      const comments = await fetchComments(source, count);
+      const current = commentCacheRef.current;
+      replaceCommentCache({ ...current, [source]: [...current[source], ...comments].slice(0, cacheSize[source]) });
+    } catch (error) {
+      setCommentError(error instanceof Error ? error.message : "Couldn't load live comments. Try again.");
+    } finally {
+      pendingCacheRefills.current.delete(source);
+    }
+  }, [fetchComments, replaceCommentCache]);
+
+  const addComment = useCallback(async () => {
+    if (isLoadingComment) return;
+
+    setIsLoadingComment(true);
+    setCommentError(null);
+    const source: CommentSource = Math.random() > 0.4 ? "real" : "ai";
+    let comment = commentCacheRef.current[source][0];
+
+    try {
+      if (comment) {
+        const current = commentCacheRef.current;
+        replaceCommentCache({ ...current, [source]: current[source].slice(1) });
+      } else {
+        const comments = await fetchComments(source, cacheSize[source]);
+        comment = comments[0];
+        const current = commentCacheRef.current;
+        replaceCommentCache({ ...current, [source]: comments.slice(1) });
+      }
+
+      setRound((items) => [...items, { id: crypto.randomUUID(), kind: "comment", comment, revealed: false }]);
+      setWaiting(false);
+      play("woosh.mp3", 0.05);
+
+      if (commentCacheRef.current[source].length <= 5) void refillCommentCache(source, cacheSize[source] - commentCacheRef.current[source].length);
+    } catch (error) {
+      setCommentError(error instanceof Error ? error.message : "Couldn't load live comments. Try again.");
+    } finally {
+      setIsLoadingComment(false);
+    }
+  }, [fetchComments, isLoadingComment, play, refillCommentCache, replaceCommentCache]);
 
   const start = useCallback(() => {
     setStarted(true);
-    addComment();
+    void addComment();
     pause();
   }, [addComment, pause]);
 
@@ -78,7 +141,7 @@ export default function Game() {
 
   const guess = useCallback((isReal: boolean) => {
     const latest = [...round].reverse().find((item) => item.kind === "comment");
-    if (!latest || disabled) return;
+    if (!latest || disabled || isLoadingComment) return;
 
     const correct = latest.comment.isReal === isReal;
     setRound((items) => items.map((item) => item.id === latest.id ? { ...item, revealed: true } : item));
@@ -92,7 +155,7 @@ export default function Game() {
     if (correct) {
       setScore((value) => value + 1);
       highlightScore("correct");
-      if (Math.random() > 0.2) addComment();
+      if (Math.random() > 0.2) void addComment();
       else addDialogue(pickLine(latest.comment.isReal ? correctRealLines : correctAiLines));
       return;
     }
@@ -107,7 +170,7 @@ export default function Game() {
     localStorage.setItem("hiscore", String(nextBestScore));
     setGameOver(true);
     setRound((items) => [...items, { id: crypto.randomUUID(), kind: "game-over", score }]);
-  }, [addComment, addDialogue, bestScore, disabled, highlightScore, lives, pause, play, round, score]);
+  }, [addComment, addDialogue, bestScore, disabled, highlightScore, isLoadingComment, lives, pause, play, round, score]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -133,7 +196,8 @@ export default function Game() {
     <div className="relative flex h-dvh w-full max-w-[480px] flex-col md:max-h-[720px] md:max-w-[720px]">
       <header className="relative z-20 flex justify-between p-4"><Score score={score} bestScore={bestScore} highlight={scoreHighlight} play={play} /><Lives lives={lives} play={play} /></header>
       <section className="fixed inset-0 z-0 flex items-end justify-center overflow-visible"><div ref={scrollRef} className={`scrollbar-hide relative max-h-screen w-full max-w-96 overflow-y-auto ${started ? "pt-[30vh]" : "pt-9"} md:max-w-[480px]`}><div className="mx-12 flex flex-col gap-8 pb-[50vh]">{round.map((item) => <RoundEntry key={item.id} item={item} />)}</div></div></section>
-      <footer className="relative z-20 mt-auto flex gap-4 p-4"><GameButton action={primary} disabled={disabled} play={play} />{started && !waiting && !gameOver && <GameButton action={{ label: "Real", icon: "👤", tone: "red", onClick: () => guess(true) }} disabled={disabled} play={play} />}</footer>
+      {commentError && <p className="relative z-20 mx-4 rounded bg-red-600 px-3 py-2 text-center text-sm font-bold" role="alert">{commentError}</p>}
+      <footer className="relative z-20 mt-auto flex gap-4 p-4"><GameButton action={primary} disabled={disabled || isLoadingComment} play={play} />{started && !waiting && !gameOver && <GameButton action={{ label: "Real", icon: "👤", tone: "red", onClick: () => guess(true) }} disabled={disabled || isLoadingComment} play={play} />}</footer>
     </div>
     <div className={`pointer-events-none fixed inset-0 z-10 ${flash === "correct" ? "game-flash-correct" : flash === "incorrect" ? "game-flash-incorrect" : ""}`} />
     <div className="pointer-events-none fixed inset-0 z-10 overflow-hidden">{particles.map((particle) => <span key={particle.id} className="game-particle" style={{ backgroundColor: particle.color, left: `${particle.left}%`, width: particle.size, height: particle.size, animationDuration: `${particle.duration}ms`, animationDelay: `${particle.delay}ms` }} />)}</div>
@@ -186,22 +250,33 @@ const Dialogue = ({ text }: { text: string }) => {
   return <div className="animate-game-enter flex items-center gap-[5.5rem]"><div className="animate-game-float relative w-0"><span className="animate-game-sway absolute -top-8 -left-1.5 block text-6xl" aria-hidden="true">🤖</span></div><div className="relative w-full rounded-xl bg-white p-4 text-center font-bold text-gray-700 shadow-lg outline-6 outline-gray-700"><span className="text-white">{text}</span><span className="absolute inset-0 box-content p-4">{words.slice(0, wordCount).join(" ")}</span></div></div>;
 };
 
-const CommentCard = ({ comment, revealed }: CommentCardProps) => <article className="animate-game-enter flex max-w-md flex-col gap-2 rounded bg-white p-4 text-gray-900 shadow-lg"><div className="flex items-center gap-2"><img src={revealed && !comment.isReal ? "/game/profile-ai.png" : comment.profilePicture} alt="Profile" className="h-8 w-8 rounded-full" /><span className="font-semibold md:text-lg">{revealed && !comment.isReal ? "Chat GPT" : comment.username}</span></div><p className="text-sm md:text-base" dangerouslySetInnerHTML={{ __html: decodeComment(comment.comment) }} /><span className="text-xs text-gray-500">{comment.date} • {comment.likes} likes</span>{revealed && comment.isReal && comment.video && <div className="mt-2 flex items-center gap-2"><img src={comment.video} alt="Video" className="h-auto w-1/2 rounded-md" /><div><small>Found on</small><strong className="block text-sm">{comment.videoName}</strong></div></div>}</article>;
+const CommentCard = ({ comment, revealed }: CommentCardProps) => <article className="animate-game-enter flex max-w-md flex-col gap-2 rounded bg-white p-4 text-gray-900 shadow-lg"><div className="flex items-center gap-2"><img src={revealed && !comment.isReal ? "/game/profile-ai.png" : comment.profilePicture} alt="Profile" className="h-8 w-8 rounded-full" /><span className="font-semibold md:text-lg">{revealed && !comment.isReal ? "Chat GPT" : comment.username}</span></div><p className="text-sm md:text-base">{decodeComment(comment.comment)}</p><span className="text-xs text-gray-500">{comment.date} • {comment.likes} likes</span>{revealed && comment.isReal && comment.video && <div className="mt-2 flex items-center gap-2"><img src={comment.video} alt="Video" className="h-auto w-1/2 rounded-md" /><div><small>Found on</small><strong className="block text-sm">{comment.videoName}</strong></div></div>}</article>;
 
 const GameButton = ({ action, disabled, play }: GameButtonProps) => <button className={`relative flex-grow flex flex-col items-center gap-1 rounded-2xl rounded-b-3xl border border-4 border-gray-700 border-b-[12px] px-4 pt-6 pb-6 text-sm font-bold text-white transition-all duration-300 active:mt-2 active:border-b-[6px] active:pb-4 ${buttonTones[action.tone]}`} onClick={() => { play("click.mp3", 0.4); action.onClick(); }} disabled={disabled}>{action.icon === "▶" ? <FaPlay className="mt-2 h-10 w-10" /> : action.icon === "→" ? <FaArrowRight className="mt-2 h-10 w-10" /> : action.icon === "↻" ? <FaSync className="mt-2 h-10 w-10" /> : action.icon === "🤖" ? <FaRobot className="mt-2 h-10 w-10" /> : action.icon === "👤" ? <IoPerson className="mt-2 h-10 w-10" /> : <span className="text-4xl">{action.icon}</span>}{action.label}{action.icon === "🤖" && <span className="absolute top-2 left-2 hidden rounded-md bg-blue-200 px-1.5 py-0.5 text-xs font-bold text-blue-800 opacity-50 md:block">A</span>}{action.icon === "👤" && <span className="absolute top-2 right-2 hidden rounded-md bg-red-200 px-1.5 py-0.5 text-xs font-bold text-red-800 opacity-50 md:block">D</span>}</button>;
 
 // === Helpers ===
 
 const buttonTones = { blue: "bg-blue-500", green: "bg-green-500", red: "bg-red-500" };
+const cacheSize = { real: 10, ai: 5 };
 const createOpeningRound = (): RoundItem[] => [{ id: "logo", kind: "logo" }, { id: "intro", kind: "dialogue", text: introLines[0] }];
-const pickComment = (): Comment => { const source = Math.random() > 0.4 ? realComments : fakeComments; const comment = source[Math.floor(Math.random() * source.length)]; return { ...comment, date: comment.isReal ? comment.date : new Date().toISOString().slice(0, 10) }; };
 const pickLine = (lines: string[]) => lines[Math.floor(Math.random() * lines.length)];
-const decodeComment = (comment: string) => comment.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/<br>/g, " ");
+const decodeComment = (comment: string) => comment.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/<br>/g, " ").replace(/<[^>]*>/g, " ");
 const createParticles = (color: string) => Array.from({ length: Math.round(window.innerWidth / 20) }, () => ({ id: crypto.randomUUID(), color, left: Math.random() * 100, size: Math.random() * 5 + 5, duration: Math.random() * 300 + 500, delay: Math.random() * 200 }));
+const readCommentCache = (): CommentCache => {
+  if (typeof window === "undefined") return { real: [], ai: [] };
+  try {
+    const stored = JSON.parse(localStorage.getItem("ai-or-not-comment-cache") ?? "{}") as Partial<CommentCache>;
+    return { real: stored.real ?? [], ai: stored.ai ?? [] };
+  } catch {
+    return { real: [], ai: [] };
+  }
+};
 
 // === Types ===
 
-type Comment = (typeof realComments)[number] | (typeof fakeComments)[number];
+type Comment = { profilePicture: string; username: string; comment: string; likes: number; date: string; isReal: boolean; videoName?: string; video?: string };
+type CommentSource = keyof typeof cacheSize;
+type CommentCache = Record<CommentSource, Comment[]>;
 type RoundItem = { id: string; kind: "logo" } | { id: string; kind: "dialogue"; text: string } | { id: string; kind: "comment"; comment: Comment; revealed: boolean } | { id: string; kind: "game-over"; score: number };
 type Action = { label: string; icon: string; tone: "blue" | "green" | "red"; onClick: () => void };
 type ScoreProps = { score: number; bestScore: number; highlight: "correct" | "reset" | null; play: (file: string, volume: number) => void };
