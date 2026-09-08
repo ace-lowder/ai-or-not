@@ -25,9 +25,12 @@ export default function Game() {
   const [commentCache, setCommentCache] = useState<CommentCache>(readCommentCache);
   const [isLoadingComment, setIsLoadingComment] = useState(false);
   const [commentError, setCommentError] = useState<string | null>(null);
+  const [isRestarting, setIsRestarting] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const commentCacheRef = useRef(commentCache);
-  const pendingCacheRefills = useRef(new Set<CommentSource>());
+  const pendingCacheRefills = useRef(new Set<CommentBucket>());
+  const isMounted = useRef(true);
+  const restartTimer = useRef<number | null>(null);
 
   useEffect(() => {
     if (started) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -36,6 +39,14 @@ export default function Game() {
   useEffect(() => {
     localStorage.setItem("ai-or-not-comment-cache", JSON.stringify(commentCache));
   }, [commentCache]);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+    isMounted.current = false;
+    if (restartTimer.current) window.clearTimeout(restartTimer.current);
+    };
+  }, []);
 
   const play = useCallback((file: string, volume: number) => {
     const sound = new Audio(`/game/${file}`);
@@ -60,67 +71,86 @@ export default function Game() {
     play("woosh.mp3", 0.05);
   }, [play]);
 
-  const replaceCommentCache = useCallback((nextCache: CommentCache) => {
+  const updateCommentCache = useCallback((updater: (current: CommentCache) => CommentCache) => {
+    const nextCache = updater(commentCacheRef.current);
     commentCacheRef.current = nextCache;
     setCommentCache(nextCache);
   }, []);
 
-  const fetchComments = useCallback(async (source: CommentSource, count: number) => {
-    const response = await fetch("/api/round", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ source, count }),
-    });
-    const payload = await response.json() as { comments?: Comment[]; error?: string };
-    if (!response.ok || !payload.comments?.length) throw new Error(payload.error ?? "Couldn't load live comments. Try again.");
-    return payload.comments;
+  const fetchComments = useCallback(async (bucket: CommentBucket, count: number) => {
+    let retryDelay = 2_000;
+    while (true) {
+      const response = await fetch("/api/round", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source: bucket === "real" ? "real" : "ai", difficulty: bucket === "hardAi" ? "hard" : "easy", count }),
+      });
+      const payload = await response.json() as { comments?: Comment[]; error?: string };
+      if (response.status !== 429) {
+        if (!response.ok || !payload.comments?.length) throw new Error(payload.error ?? "Couldn't load live comments. Try again.");
+        return payload.comments;
+      }
+
+      await new Promise((resolve) => window.setTimeout(resolve, retryDelay));
+      retryDelay = Math.min(retryDelay * 2, 60_000);
+    }
   }, []);
 
-  const refillCommentCache = useCallback(async (source: CommentSource, count: number) => {
-    if (pendingCacheRefills.current.has(source)) return;
+  const refillCommentCache = useCallback(async (bucket: CommentBucket, count: number, reportError = false) => {
+    if (!count || pendingCacheRefills.current.has(bucket)) return;
 
-    pendingCacheRefills.current.add(source);
+    pendingCacheRefills.current.add(bucket);
     try {
-      const comments = await fetchComments(source, count);
-      const current = commentCacheRef.current;
-      replaceCommentCache({ ...current, [source]: [...current[source], ...comments].slice(0, cacheSize[source]) });
+      const comments = await fetchComments(bucket, count);
+      if (isMounted.current) updateCommentCache((current) => ({ ...current, [bucket]: [...current[bucket], ...comments].slice(0, cacheSize[bucket]) }));
     } catch (error) {
-      setCommentError(error instanceof Error ? error.message : "Couldn't load live comments. Try again.");
+      if (reportError && isMounted.current) setCommentError(error instanceof Error ? error.message : "Couldn't load live comments. Try again.");
     } finally {
-      pendingCacheRefills.current.delete(source);
+      pendingCacheRefills.current.delete(bucket);
     }
-  }, [fetchComments, replaceCommentCache]);
+  }, [fetchComments, updateCommentCache]);
 
-  const addComment = useCallback(async () => {
+  useEffect(() => {
+    for (const bucket of initialCacheBuckets) {
+      const missing = cacheSize[bucket] - commentCacheRef.current[bucket].length;
+      if (missing > 0) void refillCommentCache(bucket, missing);
+    }
+  }, [refillCommentCache]);
+
+  useEffect(() => {
+    if (score < 8) return;
+    const missing = cacheSize.hardAi - commentCacheRef.current.hardAi.length;
+    if (missing > 0) void refillCommentCache("hardAi", missing);
+  }, [refillCommentCache, score]);
+
+  const addComment = useCallback(async (roundScore = score) => {
     if (isLoadingComment) return;
 
     setIsLoadingComment(true);
     setCommentError(null);
-    const source: CommentSource = Math.random() > 0.4 ? "real" : "ai";
-    let comment = commentCacheRef.current[source][0];
+    const bucket: CommentBucket = Math.random() > 0.4 ? "real" : roundScore > 10 ? "hardAi" : "easyAi";
+    let comment = commentCacheRef.current[bucket][0];
 
     try {
       if (comment) {
-        const current = commentCacheRef.current;
-        replaceCommentCache({ ...current, [source]: current[source].slice(1) });
+        updateCommentCache((current) => ({ ...current, [bucket]: current[bucket].slice(1) }));
       } else {
-        const comments = await fetchComments(source, cacheSize[source]);
+        const comments = await fetchComments(bucket, cacheSize[bucket]);
         comment = comments[0];
-        const current = commentCacheRef.current;
-        replaceCommentCache({ ...current, [source]: comments.slice(1) });
+        updateCommentCache((current) => ({ ...current, [bucket]: comments.slice(1) }));
       }
 
       setRound((items) => [...items, { id: crypto.randomUUID(), kind: "comment", comment, revealed: false }]);
       setWaiting(false);
       play("woosh.mp3", 0.05);
 
-      if (commentCacheRef.current[source].length <= 5) void refillCommentCache(source, cacheSize[source] - commentCacheRef.current[source].length);
+      if (commentCacheRef.current[bucket].length <= 5) void refillCommentCache(bucket, cacheSize[bucket] - commentCacheRef.current[bucket].length);
     } catch (error) {
       setCommentError(error instanceof Error ? error.message : "Couldn't load live comments. Try again.");
     } finally {
       setIsLoadingComment(false);
     }
-  }, [fetchComments, isLoadingComment, play, refillCommentCache, replaceCommentCache]);
+  }, [fetchComments, isLoadingComment, play, refillCommentCache, score, updateCommentCache]);
 
   const start = useCallback(() => {
     setStarted(true);
@@ -129,15 +159,20 @@ export default function Game() {
   }, [addComment, pause]);
 
   const restart = useCallback(() => {
-    setRound(createOpeningRound());
-    setScore(0);
-    setLives(3);
-    setStarted(false);
-    setGameOver(false);
-    setWaiting(true);
-    highlightScore("reset");
-    pause();
-  }, [highlightScore, pause]);
+    if (isRestarting) return;
+    setIsRestarting(true);
+    restartTimer.current = window.setTimeout(() => {
+      setRound(createOpeningRound());
+      setScore(0);
+      setLives(3);
+      setStarted(false);
+      setGameOver(false);
+      setWaiting(true);
+      highlightScore("reset");
+      setIsRestarting(false);
+      pause();
+    }, 1_000);
+  }, [highlightScore, isRestarting, pause]);
 
   const guess = useCallback((isReal: boolean) => {
     const latest = [...round].reverse().find((item) => item.kind === "comment");
@@ -153,9 +188,10 @@ export default function Game() {
     pause();
 
     if (correct) {
-      setScore((value) => value + 1);
+      const nextScore = score + 1;
+      setScore(nextScore);
       highlightScore("correct");
-      if (Math.random() > 0.2) void addComment();
+      if (Math.random() > 0.2) void addComment(nextScore);
       else addDialogue(pickLine(latest.comment.isReal ? correctRealLines : correctAiLines));
       return;
     }
@@ -177,27 +213,27 @@ export default function Game() {
       const isAi = ["a", "A", "1", "ArrowLeft"].includes(event.key);
       const isReal = ["d", "D", "2", "ArrowRight"].includes(event.key);
       if (!isAi && !isReal) return;
-      if (gameOver) restart();
+      if (gameOver && !isRestarting) restart();
       else if (!started || waiting) start();
       else guess(isReal);
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [gameOver, guess, restart, start, started, waiting]);
+  }, [gameOver, guess, isRestarting, restart, start, started, waiting]);
 
   const primary = useMemo<Action>(() => {
-    if (gameOver) return { label: "Restart", icon: "↻", tone: "red", onClick: restart };
+    if (gameOver) return { label: "Restart", icon: "↻", tone: "red", onClick: restart, isRestarting };
     if (!started) return { label: "Start", icon: "▶", tone: "green", onClick: start };
     if (waiting) return { label: "Continue", icon: "→", tone: "green", onClick: start };
     return { label: "AI", icon: "🤖", tone: "blue", onClick: () => guess(false) };
-  }, [gameOver, guess, restart, start, started, waiting]);
+  }, [gameOver, guess, isRestarting, restart, start, started, waiting]);
 
   return <main className="game-background relative flex min-h-dvh select-none flex-col items-center justify-center overflow-hidden bg-gray-900 text-white">
     <div className="relative flex h-dvh w-full max-w-[480px] flex-col md:max-h-[720px] md:max-w-[720px]">
       <header className="relative z-20 flex justify-between p-4"><Score score={score} bestScore={bestScore} highlight={scoreHighlight} play={play} /><Lives lives={lives} play={play} /></header>
       <section className="fixed inset-0 z-0 flex items-end justify-center overflow-visible"><div ref={scrollRef} className={`scrollbar-hide relative max-h-screen w-full max-w-96 overflow-y-auto ${started ? "pt-[30vh]" : "pt-9"} md:max-w-[480px]`}><div className="mx-12 flex flex-col gap-8 pb-[50vh]">{round.map((item) => <RoundEntry key={item.id} item={item} />)}</div></div></section>
       {commentError && <p className="relative z-20 mx-4 rounded bg-red-600 px-3 py-2 text-center text-sm font-bold" role="alert">{commentError}</p>}
-      <footer className="relative z-20 mt-auto flex gap-4 p-4"><GameButton action={primary} disabled={disabled || isLoadingComment} play={play} />{started && !waiting && !gameOver && <GameButton action={{ label: "Real", icon: "👤", tone: "red", onClick: () => guess(true) }} disabled={disabled || isLoadingComment} play={play} />}</footer>
+      <footer className="relative z-20 mt-auto flex gap-4 p-4">{isLoadingComment ? <LoadingButton /> : <><GameButton action={primary} disabled={disabled || isRestarting} play={play} />{started && !waiting && !gameOver && <GameButton action={{ label: "Real", icon: "👤", tone: "red", onClick: () => guess(true) }} disabled={disabled} play={play} />}</>}</footer>
     </div>
     <div className={`pointer-events-none fixed inset-0 z-10 ${flash === "correct" ? "game-flash-correct" : flash === "incorrect" ? "game-flash-incorrect" : ""}`} />
     <div className="pointer-events-none fixed inset-0 z-10 overflow-hidden">{particles.map((particle) => <span key={particle.id} className="game-particle" style={{ backgroundColor: particle.color, left: `${particle.left}%`, width: particle.size, height: particle.size, animationDuration: `${particle.duration}ms`, animationDelay: `${particle.delay}ms` }} />)}</div>
@@ -250,35 +286,54 @@ const Dialogue = ({ text }: { text: string }) => {
   return <div className="animate-game-enter flex items-center gap-[5.5rem]"><div className="animate-game-float relative w-0"><span className="animate-game-sway absolute -top-8 -left-1.5 block text-6xl" aria-hidden="true">🤖</span></div><div className="relative w-full rounded-xl bg-white p-4 text-center font-bold text-gray-700 shadow-lg outline-6 outline-gray-700"><span className="text-white">{text}</span><span className="absolute inset-0 box-content p-4">{words.slice(0, wordCount).join(" ")}</span></div></div>;
 };
 
-const CommentCard = ({ comment, revealed }: CommentCardProps) => <article className="animate-game-enter flex max-w-md flex-col gap-2 rounded bg-white p-4 text-gray-900 shadow-lg"><div className="flex items-center gap-2"><img src={revealed && !comment.isReal ? "/game/profile-ai.png" : comment.profilePicture} alt="Profile" className="h-8 w-8 rounded-full" /><span className="font-semibold md:text-lg">{revealed && !comment.isReal ? "Chat GPT" : comment.username}</span></div><p className="text-sm md:text-base">{decodeComment(comment.comment)}</p><span className="text-xs text-gray-500">{comment.date} • {comment.likes} likes</span>{revealed && comment.isReal && comment.video && <div className="mt-2 flex items-center gap-2"><img src={comment.video} alt="Video" className="h-auto w-1/2 rounded-md" /><div><small>Found on</small><strong className="block text-sm">{comment.videoName}</strong></div></div>}</article>;
+const CommentCard = ({ comment, revealed }: CommentCardProps) => <article className="animate-game-enter flex max-w-md flex-col gap-2 rounded bg-white p-4 text-gray-900 shadow-lg"><div className="flex items-center gap-2"><ProfileImage comment={comment} revealed={revealed} /><span className="font-semibold md:text-lg">{revealed && !comment.isReal ? "Chat GPT" : comment.username}</span></div><p className="text-sm md:text-base">{decodeComment(comment.comment)}</p><span className="text-xs text-gray-500">{comment.date} • {comment.likes} likes</span>{revealed && comment.isReal && comment.video && <div className="mt-2 flex items-center gap-2"><img src={comment.video} alt="Video" className="h-auto w-1/2 rounded-md" /><div><small>Found on</small><strong className="block text-sm">{comment.videoName}</strong></div></div>}</article>;
 
-const GameButton = ({ action, disabled, play }: GameButtonProps) => <button className={`relative flex-grow flex flex-col items-center gap-1 rounded-2xl rounded-b-3xl border border-4 border-gray-700 border-b-[12px] px-4 pt-6 pb-6 text-sm font-bold text-white transition-all duration-300 active:mt-2 active:border-b-[6px] active:pb-4 ${buttonTones[action.tone]}`} onClick={() => { play("click.mp3", 0.4); action.onClick(); }} disabled={disabled}>{action.icon === "▶" ? <FaPlay className="mt-2 h-10 w-10" /> : action.icon === "→" ? <FaArrowRight className="mt-2 h-10 w-10" /> : action.icon === "↻" ? <FaSync className="mt-2 h-10 w-10" /> : action.icon === "🤖" ? <FaRobot className="mt-2 h-10 w-10" /> : action.icon === "👤" ? <IoPerson className="mt-2 h-10 w-10" /> : <span className="text-4xl">{action.icon}</span>}{action.label}{action.icon === "🤖" && <span className="absolute top-2 left-2 hidden rounded-md bg-blue-200 px-1.5 py-0.5 text-xs font-bold text-blue-800 opacity-50 md:block">A</span>}{action.icon === "👤" && <span className="absolute top-2 right-2 hidden rounded-md bg-red-200 px-1.5 py-0.5 text-xs font-bold text-red-800 opacity-50 md:block">D</span>}</button>;
+const ProfileImage = ({ comment, revealed }: { comment: Comment; revealed: boolean }) => {
+  const source = revealed && !comment.isReal ? "/game/profile-ai.png" : comment.profilePicture;
+  const name = revealed && !comment.isReal ? "Chat GPT" : comment.username;
+  return <AvatarImage key={source} source={source} name={name} />;
+};
+
+const AvatarImage = ({ source, name }: { source: string; name: string }) => {
+  const [failed, setFailed] = useState(false);
+  const letter = name.trim().charAt(0).toUpperCase() || "?";
+  const color = avatarColors[name.length % avatarColors.length];
+
+  if (failed) return <span className={`flex h-8 w-8 items-center justify-center rounded-full ${color} text-sm font-bold text-white`} aria-label={`${name} profile fallback`}>{letter}</span>;
+  return <img src={source} alt="Profile" className="h-8 w-8 rounded-full" onError={() => setFailed(true)} />;
+};
+
+const GameButton = ({ action, disabled, play }: GameButtonProps) => <button className={`relative flex flex-grow flex-col items-center gap-1 rounded-2xl rounded-b-3xl border border-4 border-gray-700 border-b-[12px] px-4 pt-6 pb-6 text-sm font-bold text-white transition-all duration-300 active:mt-2 active:border-b-[6px] active:pb-4 ${buttonTones[action.tone]}`} onClick={() => { play("click.mp3", 0.4); action.onClick(); }} disabled={disabled}>{action.icon === "▶" ? <FaPlay className="mt-2 h-10 w-10" /> : action.icon === "→" ? <FaArrowRight className="mt-2 h-10 w-10" /> : action.icon === "↻" ? <span className={action.isRestarting ? "animate-game-restart-pulse" : ""}><FaSync className={`mt-2 h-10 w-10 ${action.isRestarting ? "animate-game-restart-spin" : ""}`} /></span> : action.icon === "🤖" ? <FaRobot className="mt-2 h-10 w-10" /> : action.icon === "👤" ? <IoPerson className="mt-2 h-10 w-10" /> : <span className="text-4xl">{action.icon}</span>}{action.label}{action.icon === "🤖" && <span className="absolute top-2 left-2 hidden rounded-md bg-blue-200 px-1.5 py-0.5 text-xs font-bold text-blue-800 opacity-50 md:block">A</span>}{action.icon === "👤" && <span className="absolute top-2 right-2 hidden rounded-md bg-red-200 px-1.5 py-0.5 text-xs font-bold text-red-800 opacity-50 md:block">D</span>}</button>;
+
+const LoadingButton = () => <div className="flex flex-grow flex-col items-center gap-1 rounded-2xl rounded-b-3xl border-4 border-b-[12px] border-gray-700 bg-blue-500 px-4 pt-6 pb-6 text-sm font-bold text-white"><span className="mt-2 h-10 w-10 animate-spin rounded-full border-4 border-white border-t-transparent" />Loading</div>;
 
 // === Helpers ===
 
 const buttonTones = { blue: "bg-blue-500", green: "bg-green-500", red: "bg-red-500" };
-const cacheSize = { real: 10, ai: 5 };
+const cacheSize = { real: 10, easyAi: 5, hardAi: 5 };
+const initialCacheBuckets: CommentBucket[] = ["real", "easyAi"];
+const avatarColors = ["bg-blue-500", "bg-emerald-500", "bg-violet-500", "bg-rose-500", "bg-amber-500"];
 const createOpeningRound = (): RoundItem[] => [{ id: "logo", kind: "logo" }, { id: "intro", kind: "dialogue", text: introLines[0] }];
 const pickLine = (lines: string[]) => lines[Math.floor(Math.random() * lines.length)];
 const decodeComment = (comment: string) => comment.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/<br>/g, " ").replace(/<[^>]*>/g, " ");
 const createParticles = (color: string) => Array.from({ length: Math.round(window.innerWidth / 20) }, () => ({ id: crypto.randomUUID(), color, left: Math.random() * 100, size: Math.random() * 5 + 5, duration: Math.random() * 300 + 500, delay: Math.random() * 200 }));
 const readCommentCache = (): CommentCache => {
-  if (typeof window === "undefined") return { real: [], ai: [] };
+  if (typeof window === "undefined") return { real: [], easyAi: [], hardAi: [] };
   try {
     const stored = JSON.parse(localStorage.getItem("ai-or-not-comment-cache") ?? "{}") as Partial<CommentCache>;
-    return { real: stored.real ?? [], ai: stored.ai ?? [] };
+    return { real: stored.real ?? [], easyAi: stored.easyAi ?? [], hardAi: stored.hardAi ?? [] };
   } catch {
-    return { real: [], ai: [] };
+    return { real: [], easyAi: [], hardAi: [] };
   }
 };
 
 // === Types ===
 
 type Comment = { profilePicture: string; username: string; comment: string; likes: number; date: string; isReal: boolean; videoName?: string; video?: string };
-type CommentSource = keyof typeof cacheSize;
-type CommentCache = Record<CommentSource, Comment[]>;
+type CommentBucket = keyof typeof cacheSize;
+type CommentCache = Record<CommentBucket, Comment[]>;
 type RoundItem = { id: string; kind: "logo" } | { id: string; kind: "dialogue"; text: string } | { id: string; kind: "comment"; comment: Comment; revealed: boolean } | { id: string; kind: "game-over"; score: number };
-type Action = { label: string; icon: string; tone: "blue" | "green" | "red"; onClick: () => void };
+type Action = { label: string; icon: string; tone: "blue" | "green" | "red"; onClick: () => void; isRestarting?: boolean };
 type ScoreProps = { score: number; bestScore: number; highlight: "correct" | "reset" | null; play: (file: string, volume: number) => void };
 type LivesProps = { lives: number; play: (file: string, volume: number) => void };
 type CommentCardProps = { comment: Comment; revealed: boolean };

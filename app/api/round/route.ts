@@ -12,6 +12,7 @@ type Comment = {
 };
 
 type Source = "ai" | "real";
+type Difficulty = "easy" | "hard";
 
 type YouTubeVideo = {
   id: string;
@@ -23,6 +24,7 @@ const MAX_COMMENT_LENGTH = 240;
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const source: Source | null = body?.source === "ai" || body?.source === "real" ? body.source : null;
+  const difficulty: Difficulty = body?.difficulty === "hard" ? "hard" : "easy";
   const count = body?.count;
 
   if (!source || !Number.isInteger(count) || count < 1 || count > 10) {
@@ -36,13 +38,13 @@ export async function POST(request: Request) {
   try {
     const comments = source === "real"
       ? await getYouTubeComments(count)
-      : await getAiComments(count);
+      : await getAiComments(count, difficulty);
 
     return NextResponse.json({ comments });
   } catch (error) {
     const message = error instanceof Error ? error.message : "The comment service failed.";
     console.error(`[api/round] ${source} comments failed: ${message}`);
-    return NextResponse.json({ error: message }, { status: 502 });
+    return NextResponse.json({ error: message }, { status: error instanceof RoundApiError ? error.status : 502 });
   }
 }
 
@@ -59,9 +61,9 @@ async function getYouTubeComments(count: number): Promise<Comment[]> {
   throw new Error("YouTube did not return enough eligible comments. Try again.");
 }
 
-async function getAiComments(count: number): Promise<Comment[]> {
+async function getAiComments(count: number, difficulty: Difficulty): Promise<Comment[]> {
   const sourceComments = await getYouTubeComments(count);
-  return Promise.all(sourceComments.map(createAiComment));
+  return Promise.all(sourceComments.map((comment) => createAiComment(comment, difficulty)));
 }
 
 async function getPopularVideos(): Promise<YouTubeVideo[]> {
@@ -70,7 +72,7 @@ async function getPopularVideos(): Promise<YouTubeVideo[]> {
     cache: "no-store",
   });
 
-  if (!response.ok) throw new Error("YouTube could not load popular videos. Check YOUTUBE_API_KEY.");
+  if (!response.ok) throw new RoundApiError(response.status, "YouTube could not load popular videos. Check YOUTUBE_API_KEY.");
 
   const payload = await response.json() as { items?: YouTubeVideo[] };
   if (!payload.items?.length) throw new Error("YouTube did not return any popular videos.");
@@ -84,6 +86,7 @@ async function getCommentFromVideo(video: YouTubeVideo): Promise<Comment | null>
     cache: "no-store",
   });
 
+  if (response.status === 429) throw new RoundApiError(429, "YouTube is temporarily rate limiting requests.");
   if (!response.ok) return null;
 
   const payload = await response.json() as { items?: Array<{ snippet?: { topLevelComment?: { snippet?: YouTubeCommentSnippet } } }> };
@@ -106,7 +109,7 @@ async function getCommentFromVideo(video: YouTubeVideo): Promise<Comment | null>
   };
 }
 
-async function createAiComment(source: Comment): Promise<Comment> {
+async function createAiComment(source: Comment, difficulty: Difficulty): Promise<Comment> {
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
@@ -118,7 +121,7 @@ async function createAiComment(source: Comment): Promise<Comment> {
       store: false,
       max_output_tokens: 256,
       reasoning: { effort: "none" },
-      instructions: "Create an original, believable YouTube comment for a guessing game. Keep it under 240 characters. Do not use hateful, sexual, or personally identifying content.",
+      instructions: difficulty === "hard" ? hardCommentInstructions : easyCommentInstructions,
       input: `Video title: ${source.videoName}\nA real comment for style only: ${source.comment}`,
       text: {
         format: {
@@ -139,7 +142,7 @@ async function createAiComment(source: Comment): Promise<Comment> {
     }),
   });
 
-  if (!response.ok) throw new Error("OpenAI could not generate a comment. Check OPENAI_API_KEY and available credits.");
+  if (!response.ok) throw new RoundApiError(response.status, "OpenAI could not generate a comment. Check OPENAI_API_KEY and available credits.");
 
   const payload = await response.json() as OpenAiResponse;
   const content = getOutputText(payload);
@@ -184,3 +187,13 @@ type YouTubeCommentSnippet = {
 type OpenAiResponse = {
   output?: Array<{ content?: Array<{ type?: string; text?: string }> }>;
 };
+
+class RoundApiError extends Error {
+  constructor(readonly status: number, message: string) {
+    super(message);
+  }
+}
+
+const easyCommentInstructions = "Create an original, believable YouTube comment for a guessing game. Keep it under 240 characters. Do not use hateful, sexual, or personally identifying content.";
+
+const hardCommentInstructions = `Create an original fake YouTube comment for a difficult guessing game. Keep it under the source comment's length, usually about half as long, with at most two sentences. Match the video and source comment's context, but do not copy it. Write like an imperfect casual YouTube user: use minor grammar mistakes or typos, but never missing letters. Do not use commas, apostrophes, or a final period. Never use um, uh, ugh, dat, gr8, luv, dhat, enuf, meen, vidz, dis, text-message substitutions like r/y/n/d, hashtags, or start with Wow, Omg, Oh, Yeah, or Yo. If the tone is negative or bored, use one short sentence. Pick one distinct persona: confused child, slangy child, troll, angry viewer, incoherent viewer, enthusiastic fan, casual viewer, ranter, fan critic, happy viewer, likes bait, joke stealer, stretched-vowel fan, emoji-only user, shipper, request kid, quoter, all-caps timestamp poster, proud country fan, laugher, or verbose yapper. Add only natural contextual slang. Do not use hateful, sexual, or personally identifying content.`;
