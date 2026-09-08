@@ -48,6 +48,18 @@ export default function Game() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!gameOver) return;
+
+    restartTimer.current = window.setTimeout(() => {
+      restartTimer.current = null;
+      setIsRestarting(false);
+    }, 1_000);
+    return () => {
+      if (restartTimer.current) window.clearTimeout(restartTimer.current);
+    };
+  }, [gameOver]);
+
   const play = useCallback((file: string, volume: number) => {
     const sound = new Audio(`/game/${file}`);
     sound.volume = volume;
@@ -160,19 +172,14 @@ export default function Game() {
 
   const restart = useCallback(() => {
     if (isRestarting) return;
-    setIsRestarting(true);
-    restartTimer.current = window.setTimeout(() => {
-      setRound(createOpeningRound());
-      setScore(0);
-      setLives(3);
-      setStarted(false);
-      setGameOver(false);
-      setWaiting(true);
-      highlightScore("reset");
-      setIsRestarting(false);
-      pause();
-    }, 1_000);
-  }, [highlightScore, isRestarting, pause]);
+    setRound(createOpeningRound());
+    setScore(0);
+    setLives(3);
+    setStarted(false);
+    setGameOver(false);
+    setWaiting(true);
+    highlightScore("reset");
+  }, [highlightScore, isRestarting]);
 
   const guess = useCallback((isReal: boolean) => {
     const latest = [...round].reverse().find((item) => item.kind === "comment");
@@ -204,6 +211,7 @@ export default function Game() {
     const nextBestScore = Math.max(bestScore, score);
     setBestScore(nextBestScore);
     localStorage.setItem("hiscore", String(nextBestScore));
+    setIsRestarting(true);
     setGameOver(true);
     setRound((items) => [...items, { id: crypto.randomUUID(), kind: "game-over", score }]);
   }, [addComment, addDialogue, bestScore, disabled, highlightScore, isLoadingComment, lives, pause, play, round, score]);
@@ -213,8 +221,11 @@ export default function Game() {
       const isAi = ["a", "A", "1", "ArrowLeft"].includes(event.key);
       const isReal = ["d", "D", "2", "ArrowRight"].includes(event.key);
       if (!isAi && !isReal) return;
-      if (gameOver && !isRestarting) restart();
-      else if (!started || waiting) start();
+      if (gameOver) {
+        if (!isRestarting) restart();
+        return;
+      }
+      if (!started || waiting) start();
       else guess(isReal);
     };
     window.addEventListener("keydown", handleKeyDown);
