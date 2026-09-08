@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { FaArrowRight, FaPlay, FaRobot, FaSync } from "react-icons/fa";
 import { IoPerson } from "react-icons/io5";
 
@@ -27,13 +27,28 @@ export default function Game() {
   const [commentError, setCommentError] = useState<string | null>(null);
   const [isRestarting, setIsRestarting] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const previousScrollPadding = useRef(0);
+  const previousRoundLength = useRef(round.length);
+  const wasStarted = useRef(false);
   const commentCacheRef = useRef(commentCache);
   const pendingCommentLoads = useRef(new Map<CommentBucket, Promise<void>>());
   const isMounted = useRef(true);
   const restartTimer = useRef<number | null>(null);
 
+  useLayoutEffect(() => {
+    const scrollArea = scrollRef.current;
+    if (!scrollArea) return;
+
+    const paddingTop = Number.parseFloat(window.getComputedStyle(scrollArea).paddingTop);
+    if (!wasStarted.current && started) scrollArea.scrollTop += paddingTop - previousScrollPadding.current;
+    previousScrollPadding.current = paddingTop;
+    wasStarted.current = started;
+  }, [started]);
+
   useEffect(() => {
-    if (started) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    const hasNewItem = round.length > previousRoundLength.current;
+    previousRoundLength.current = round.length;
+    if (started && hasNewItem) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [round, started]);
 
   useEffect(() => {
