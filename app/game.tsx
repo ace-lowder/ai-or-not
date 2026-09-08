@@ -28,7 +28,7 @@ export default function Game() {
   const [isRestarting, setIsRestarting] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const commentCacheRef = useRef(commentCache);
-  const pendingCacheRefills = useRef(new Set<CommentBucket>());
+  const pendingCommentLoads = useRef(new Map<CommentBucket, Promise<void>>());
   const isMounted = useRef(true);
   const restartTimer = useRef<number | null>(null);
 
@@ -108,61 +108,66 @@ export default function Game() {
     }
   }, []);
 
-  const refillCommentCache = useCallback(async (bucket: CommentBucket, count: number, reportError = false) => {
-    if (!count || pendingCacheRefills.current.has(bucket)) return;
+  const loadOneComment = useCallback((bucket: CommentBucket) => {
+    if (commentCacheRef.current[bucket].length >= cacheSize[bucket]) return Promise.resolve();
 
-    pendingCacheRefills.current.add(bucket);
+    const pending = pendingCommentLoads.current.get(bucket);
+    if (pending) return pending;
+
+    const request = (async () => {
     try {
-      const comments = await fetchComments(bucket, count);
-      if (isMounted.current) updateCommentCache((current) => ({ ...current, [bucket]: [...current[bucket], ...comments].slice(0, cacheSize[bucket]) }));
-    } catch (error) {
-      if (reportError && isMounted.current) setCommentError(error instanceof Error ? error.message : "Couldn't load live comments. Try again.");
+        const comments = await fetchComments(bucket, 1);
+        if (isMounted.current) updateCommentCache((current) => ({ ...current, [bucket]: [...current[bucket], comments[0]].slice(0, cacheSize[bucket]) }));
     } finally {
-      pendingCacheRefills.current.delete(bucket);
+        pendingCommentLoads.current.delete(bucket);
     }
+    })();
+
+    pendingCommentLoads.current.set(bucket, request);
+    return request;
   }, [fetchComments, updateCommentCache]);
 
-  useEffect(() => {
-    for (const bucket of initialCacheBuckets) {
-      const missing = cacheSize[bucket] - commentCacheRef.current[bucket].length;
-      if (missing > 0) void refillCommentCache(bucket, missing);
-    }
-  }, [refillCommentCache]);
+  const takeReadyComment = useCallback((buckets: CommentBucket[]) => {
+    const preferred = Math.random() > 0.4 ? "real" : buckets.find((bucket) => bucket !== "real")!;
+    const bucket = commentCacheRef.current[preferred].length ? preferred : buckets.find((candidate) => commentCacheRef.current[candidate].length);
+    if (!bucket) return undefined;
+
+    const comment = commentCacheRef.current[bucket][0];
+    updateCommentCache((current) => ({ ...current, [bucket]: current[bucket].slice(1) }));
+    return comment;
+  }, [updateCommentCache]);
 
   useEffect(() => {
-    if (score < 8) return;
-    const missing = cacheSize.hardAi - commentCacheRef.current.hardAi.length;
-    if (missing > 0) void refillCommentCache("hardAi", missing);
-  }, [refillCommentCache, score]);
+    const buckets = score >= 8 ? cacheBuckets : initialCacheBuckets;
+    for (const bucket of buckets) void loadOneComment(bucket);
+  }, [commentCache, loadOneComment, score]);
 
   const addComment = useCallback(async (roundScore = score) => {
     if (isLoadingComment) return;
 
     setIsLoadingComment(true);
     setCommentError(null);
-    const bucket: CommentBucket = Math.random() > 0.4 ? "real" : roundScore > 10 ? "hardAi" : "easyAi";
-    let comment = commentCacheRef.current[bucket][0];
+    const buckets = getEligibleBuckets(roundScore);
+    let comment = takeReadyComment(buckets);
 
     try {
-      if (comment) {
-        updateCommentCache((current) => ({ ...current, [bucket]: current[bucket].slice(1) }));
-      } else {
-        const comments = await fetchComments(bucket, cacheSize[bucket]);
-        comment = comments[0];
-        updateCommentCache((current) => ({ ...current, [bucket]: comments.slice(1) }));
+      if (!comment) {
+        await Promise.any(buckets.map(loadOneComment));
+        comment = takeReadyComment(buckets);
       }
 
-      setRound((items) => [...items, { id: crypto.randomUUID(), kind: "comment", comment, revealed: false }]);
+      if (!comment) throw new Error("Couldn't load a live comment. Try again.");
+      const nextComment = comment;
+
+      setRound((items) => [...items, { id: crypto.randomUUID(), kind: "comment", comment: nextComment, revealed: false }]);
       setWaiting(false);
       play("woosh.mp3", 0.05);
-
-      if (commentCacheRef.current[bucket].length <= 5) void refillCommentCache(bucket, cacheSize[bucket] - commentCacheRef.current[bucket].length);
     } catch (error) {
       setCommentError(error instanceof Error ? error.message : "Couldn't load live comments. Try again.");
     } finally {
       setIsLoadingComment(false);
     }
-  }, [fetchComments, isLoadingComment, play, refillCommentCache, score, updateCommentCache]);
+  }, [isLoadingComment, loadOneComment, play, score, takeReadyComment]);
 
   const start = useCallback(() => {
     setStarted(true);
@@ -321,11 +326,13 @@ const LoadingButton = () => <div className="flex flex-grow flex-col items-center
 // === Helpers ===
 
 const buttonTones = { blue: "bg-blue-500", green: "bg-green-500", red: "bg-red-500" };
-const cacheSize = { real: 10, easyAi: 5, hardAi: 5 };
+const cacheSize = { real: 2, easyAi: 2, hardAi: 2 };
+const cacheBuckets: CommentBucket[] = ["real", "easyAi", "hardAi"];
 const initialCacheBuckets: CommentBucket[] = ["real", "easyAi"];
 const avatarColors = ["bg-blue-500", "bg-emerald-500", "bg-violet-500", "bg-rose-500", "bg-amber-500"];
 const createOpeningRound = (): RoundItem[] => [{ id: "logo", kind: "logo" }, { id: "intro", kind: "dialogue", text: introLines[0] }];
 const pickLine = (lines: string[]) => lines[Math.floor(Math.random() * lines.length)];
+const getEligibleBuckets = (score: number): CommentBucket[] => score > 10 ? ["real", "hardAi"] : ["real", "easyAi"];
 const decodeComment = (comment: string) => comment.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/<br>/g, " ").replace(/<[^>]*>/g, " ");
 const createParticles = (color: string) => Array.from({ length: Math.round(window.innerWidth / 20) }, () => ({ id: crypto.randomUUID(), color, left: Math.random() * 100, size: Math.random() * 5 + 5, duration: Math.random() * 300 + 500, delay: Math.random() * 200 }));
 const readCommentCache = (): CommentCache => {
