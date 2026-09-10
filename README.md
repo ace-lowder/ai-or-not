@@ -1,36 +1,31 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI or Not
 
-## Getting Started
+[> Play AI or Not](https://aiornot.site)
 
-First, run the development server:
+AI or Not is a browser game where players guess whether YouTube comments are real or AI-generated. Built with Next.js, React, and TypeScript, it uses a Next.js route handler to load current YouTube comments and generate comparable AI comments through the OpenAI Responses API. As players score more points, the game uses harder generation prompts; a browser cache keeps rounds moving without repeated API requests.
+
+## Develop locally
+
+You need Git, Node.js 20.9 or newer, npm, and API keys for OpenAI and YouTube Data.
+
+```bash
+git clone https://github.com/ace-lowder/ai-or-not.git
+cd ai-or-not
+npm ci
+cp .env.example .env.local
+```
+
+Add your development keys to `.env.local`, then start the app:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`. Keep API keys in `.env.local`; do not commit or expose them in browser code.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Commands
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `npm run dev` starts the local app
+- `npm run lint` checks the code
+- `npm run build` creates a production build
+- `npm run start` runs the production build
